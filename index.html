@@ -85,6 +85,9 @@
         .view-toggle-icon:hover {
             transform: scale(1.2);
         }
+        .note-icon.has-note {
+            color: #f59e0b; /* Amber color for existing notes */
+        }
         /* Styles from previous MCQ bank */
         .answer-btn.correct { background-color: #d1fae5; border-color: #10b981; color: #065f46; }
         .answer-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
@@ -117,6 +120,9 @@
             </a>
             <div class="flex items-center gap-4">
                 <span id="user-name-display" class="text-base font-medium text-slate-200 hidden sm:block"></span>
+                <button id="notes-btn" class="text-white hover:text-slate-300 transition-colors text-2xl" title="My Notes" aria-label="My Notes">
+                    <i class="fas fa-book-open"></i>
+                </button>
                 <button id="activity-log-btn" class="text-white hover:text-slate-300 transition-colors text-2xl" title="Activity Log" aria-label="Activity Log">
                     <i class="fas fa-history"></i>
                 </button>
@@ -281,6 +287,24 @@
                 <div id="list-items" class="p-4 md:p-6 grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4"></div>
             </div>
 
+            <!-- My Notes Screen -->
+            <div id="notes-container" class="w-full hidden">
+                <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
+                    <button id="notes-back-btn" class="text-slate-700 hover:text-blue-600 transition-colors" title="Back"><i class="fas fa-arrow-left"></i> Back</button>
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-800">My Notes</h2>
+                    <div class="w-16"></div> <!-- Spacer -->
+                </div>
+                <div class="p-6 md:p-8">
+                    <div class="mb-4 p-1 bg-slate-200 rounded-lg flex justify-center gap-1">
+                        <button id="notes-filter-quizzes" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Quiz Notes</button>
+                        <button id="notes-filter-lectures" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Lecture Notes</button>
+                    </div>
+                    <div id="notes-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
+                        <!-- Notes will be injected here -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Activity Log Screen -->
             <div id="activity-log-container" class="w-full hidden">
                 <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
@@ -383,6 +407,7 @@
                              <button id="navigator-btn" class="text-2xl text-slate-500 hover:text-blue-600 transition-colors" title="Question Navigator" aria-label="Question Navigator"><i class="fas fa-th"></i></button>
                             <button id="flag-btn" class="flag-btn text-2xl text-slate-400 hover:text-amber-500 transition-colors" title="Flag for Review" aria-label="Flag for Review"><i class="far fa-flag"></i></button>
                             <button id="hint-btn" class="text-2xl text-slate-500 hover:text-yellow-500 transition-colors" title="Show Hint" aria-label="Show Hint"><i class="fas fa-lightbulb"></i></button>
+                            <button id="quiz-note-btn" class="text-2xl text-slate-500 hover:text-amber-500 transition-colors note-icon" title="My Note"><i class="fas fa-sticky-note"></i></button>
                         </div>
                         <button id="next-skip-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors action-btn">Next</button>
                     </div>
@@ -403,7 +428,7 @@
         </footer>
     </div>
 
-    <!-- Modals (Navigator, Confirmation, Image Viewer) -->
+    <!-- Modals (Navigator, Confirmation, Image Viewer, Note) -->
     <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
         <div id="confirmation-modal" class="bg-white rounded-lg p-8 shadow-xl max-w-sm w-full hidden">
             <h3 id="modal-title" class="text-xl font-bold mb-4">Are you sure?</h3>
@@ -424,6 +449,14 @@
             <button id="image-viewer-close-btn" class="absolute top-2 right-2 text-2xl text-gray-600 hover:text-black">&times;</button>
             <img id="modal-image" src="" alt="Full size image" class="max-w-full max-h-[80vh] mx-auto">
         </div>
+        <div id="note-modal" class="bg-white rounded-lg p-6 shadow-xl max-w-lg w-full hidden">
+            <h3 id="note-modal-title" class="text-xl font-bold mb-4">My Note</h3>
+            <textarea id="note-textarea" class="w-full h-40 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Write your personal note here..."></textarea>
+            <div class="flex justify-end gap-4 mt-4">
+                <button id="note-cancel-btn" class="action-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
+                <button id="note-save-btn" class="action-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -435,17 +468,21 @@
         let allQuestions = [];
         let groupedLectures = {};
         let validUsers = [];
+        let userQuizNotes = [];
+        let userLectureNotes = [];
         let navigationHistory = [];
         let currentUser = null;
         let viewedLectures = new Set();
         let fullActivityLog = []; // To store the fetched log once
         let activityChartInstance = null;
+        let currentNote = { type: null, itemId: null };
 
         // --- DOM ELEMENTS ---
         const globalHeader = document.getElementById('global-header');
         const globalHomeBtn = document.getElementById('global-home-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const activityLogBtn = document.getElementById('activity-log-btn');
+        const notesBtn = document.getElementById('notes-btn');
         const userNameDisplay = document.getElementById('user-name-display');
         
         // Screens
@@ -456,6 +493,7 @@
         const listContainer = document.getElementById('list-container');
         const quizContainer = document.getElementById('quiz-container');
         const activityLogContainer = document.getElementById('activity-log-container');
+        const notesContainer = document.getElementById('notes-container');
 
         // Login
         const loginForm = document.getElementById('login-form');
@@ -477,6 +515,12 @@
         const lectureSearchInput = document.getElementById('lecture-search-input');
         const lecturesLoader = document.getElementById('lectures-loader');
         const lecturesList = document.getElementById('lectures-list');
+
+        // Notes Screen
+        const notesBackBtn = document.getElementById('notes-back-btn');
+        const notesFilterQuizzes = document.getElementById('notes-filter-quizzes');
+        const notesFilterLectures = document.getElementById('notes-filter-lectures');
+        const notesList = document.getElementById('notes-list');
 
         // Activity Log
         const activityBackBtn = document.getElementById('activity-back-btn');
@@ -531,6 +575,7 @@
         const previousBtn = document.getElementById('previous-btn');
         const nextSkipBtn = document.getElementById('next-skip-btn');
         const flagBtn = document.getElementById('flag-btn');
+        const quizNoteBtn = document.getElementById('quiz-note-btn');
         const endQuizBtn = document.getElementById('end-quiz-btn');
         const scoreProgressText = document.getElementById('score-progress-text');
         const scoreBarCorrect = document.getElementById('score-bar-correct');
@@ -553,6 +598,11 @@
         const imageViewerModal = document.getElementById('image-viewer-modal');
         const modalImage = document.getElementById('modal-image');
         const imageViewerCloseBtn = document.getElementById('image-viewer-close-btn');
+        const noteModal = document.getElementById('note-modal');
+        const noteModalTitle = document.getElementById('note-modal-title');
+        const noteTextarea = document.getElementById('note-textarea');
+        const noteSaveBtn = document.getElementById('note-save-btn');
+        const noteCancelBtn = document.getElementById('note-cancel-btn');
 
         // --- QUIZ STATE ---
         let currentQuestionIndex = 0;
@@ -585,20 +635,19 @@
         function parseQuestions(data) {
             return data.filter(row => row.Chapter && String(row.Chapter).trim() && row.Question && String(row.Question).trim()).map(row => {
                 const answerOptions = [];
-                if (row.CorrectAnswer && String(row.CorrectAnswer).trim() !== '') answerOptions.push({ text: row.CorrectAnswer, isCorrect: true, rationale: row.CorrectRationale || '' });
-                if (row.IncorrectAnswer1 && String(row.IncorrectAnswer1).trim() !== '') answerOptions.push({ text: row.IncorrectAnswer1, isCorrect: false, rationale: row.IncorrectRationale1 || '' });
-                if (row.IncorrectAnswer2 && String(row.IncorrectAnswer2).trim() !== '') answerOptions.push({ text: row.IncorrectAnswer2, isCorrect: false, rationale: row.IncorrectRationale2 || '' });
-                if (row.IncorrectAnswer3 && String(row.IncorrectAnswer3).trim() !== '') answerOptions.push({ text: row.IncorrectAnswer3, isCorrect: false, rationale: row.IncorrectRationale3 || '' });
-                return { chapter: row.Chapter, question: row.Question, hint: row.Hint || '', source: row.Source || '', ImageURL: row.ImageURL || '', answerOptions: answerOptions };
+                if (row.CorrectAnswer && String(row.CorrectAnswer).trim() !== '') answerOptions.push({ text: String(row.CorrectAnswer), isCorrect: true, rationale: row.CorrectRationale || '' });
+                if (row.IncorrectAnswer1 && String(row.IncorrectAnswer1).trim() !== '') answerOptions.push({ text: String(row.IncorrectAnswer1), isCorrect: false, rationale: row.IncorrectRationale1 || '' });
+                if (row.IncorrectAnswer2 && String(row.IncorrectAnswer2).trim() !== '') answerOptions.push({ text: String(row.IncorrectAnswer2), isCorrect: false, rationale: row.IncorrectRationale2 || '' });
+                if (row.IncorrectAnswer3 && String(row.IncorrectAnswer3).trim() !== '') answerOptions.push({ text: String(row.IncorrectAnswer3), isCorrect: false, rationale: row.IncorrectRationale3 || '' });
+                return { UniqueID: row.UniqueID, chapter: row.Chapter, question: row.Question, hint: row.Hint || '', source: row.Source || '', ImageURL: row.ImageURL || '', answerOptions: answerOptions };
             });
         }
         
         function groupLecturesByChapter(lectureData) {
             const chapters = {};
-            const hasAlphabetic = /[a-zA-Z]/;
             lectureData.forEach(row => {
                 const chapterName = row.Chapter;
-                if (!chapterName || String(chapterName).length < 2 || String(chapterName).toLowerCase().startsWith('http') || !hasAlphabetic.test(chapterName)) {
+                if (!chapterName || String(chapterName).length < 2 || String(chapterName).toLowerCase().startsWith('http')) {
                     return; 
                 }
                 if (!chapters[chapterName]) {
@@ -606,6 +655,7 @@
                 }
                 if (row.LectureName) {
                     chapters[chapterName].topics.push({ 
+                        id: row.UniqueID,
                         name: row.LectureName, 
                         link: row.LectureURL
                     });
@@ -622,7 +672,7 @@
             });
             return chapters;
         }
-
+        
         async function loadAllData() {
             loginLoader.classList.remove('hidden');
             loginLoadingText.classList.remove('hidden');
@@ -647,6 +697,23 @@
             }
         }
 
+        async function loadUserData() {
+            if (!currentUser || currentUser.Role === 'Guest') return;
+            try {
+                const response = await fetch(`${API_URL}?request=userData&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error('Could not fetch user data.');
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                fullActivityLog = data.logs || [];
+                userQuizNotes = data.quizNotes || [];
+                userLectureNotes = data.lectureNotes || [];
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
         function populateCustomExamOptions() {
             const chapters = [...new Set(allQuestions.map(q => q.chapter))].sort();
             const sources = [...new Set(allQuestions.map(q => q.source).filter(s => s))].sort();
@@ -668,10 +735,11 @@
 
         async function handleLogin(event) {
             event.preventDefault();
-            const user = validUsers.find(u => u.Username === usernameInput.value && u.Password === passwordInput.value);
+            const user = validUsers.find(u => u.Username === usernameInput.value && String(u.Password) === passwordInput.value);
             if (user) {
                 currentUser = user;
                 loadUserProgress();
+                await loadUserData();
                 showMainMenuScreen();
             } else {
                 loginError.classList.remove('hidden');
@@ -679,7 +747,7 @@
         }
         
         function showScreen(screenToShow, isGuest = false) {
-            [loginContainer, mainMenuContainer, lecturesContainer, qbankContainer, listContainer, quizContainer, activityLogContainer].forEach(screen => {
+            [loginContainer, mainMenuContainer, lecturesContainer, qbankContainer, listContainer, quizContainer, activityLogContainer, notesContainer].forEach(screen => {
                 if(screen) screen.classList.add('hidden');
             });
             if(screenToShow) screenToShow.classList.remove('hidden');
@@ -690,11 +758,13 @@
                     userNameDisplay.classList.add('hidden');
                     logoutBtn.classList.add('hidden');
                     activityLogBtn.classList.add('hidden');
+                    notesBtn.classList.add('hidden');
                 } else {
                     userNameDisplay.textContent = currentUser.Name;
                     userNameDisplay.classList.remove('hidden');
                     logoutBtn.classList.remove('hidden');
                     activityLogBtn.classList.remove('hidden');
+                    notesBtn.classList.remove('hidden');
                 }
             } else {
                 globalHeader.classList.add('hidden');
@@ -761,16 +831,29 @@
                         listItem.classList.add('lecture-viewed');
                     }
 
+                    const controls = document.createElement('div');
+                    controls.className = 'flex items-center gap-3';
+
                     const icon = document.createElement('i');
                     icon.className = `fas ${isViewed ? 'fa-check-circle' : 'fa-play-circle'} mr-3 text-blue-500 view-toggle-icon`;
-                    icon.dataset.link = topic.link;
-                    icon.dataset.name = topic.name;
                     icon.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         toggleLectureViewed(topic.link, topic.name);
                     });
 
+                    const noteIcon = document.createElement('i');
+                    const hasNote = userLectureNotes.some(note => note.LectureID === topic.id);
+                    noteIcon.className = `fas fa-sticky-note text-slate-400 hover:text-amber-500 note-icon ${hasNote ? 'has-note' : ''}`;
+                    noteIcon.addEventListener('click', (e) => {
+                         e.preventDefault();
+                         e.stopPropagation();
+                         openNoteModal('lecture', topic.id, topic.name);
+                    });
+                    
+                    controls.appendChild(icon);
+                    controls.appendChild(noteIcon);
+                    
                     const content = document.createElement('div');
                     content.className = "flex-grow";
 
@@ -788,16 +871,8 @@
                         content.appendChild(nameSpan);
                     }
                     
-                    listItem.appendChild(icon);
+                    listItem.appendChild(controls);
                     listItem.appendChild(content);
-
-                    if(topic.link){
-                         const externalLink = document.createElement('a');
-                         externalLink.href = topic.link;
-                         externalLink.target = '_blank';
-                         externalLink.innerHTML = `<i class="fas fa-external-link-alt text-slate-400 group-hover:text-blue-600"></i>`;
-                         listItem.appendChild(externalLink);
-                    }
                     
                     topicList.appendChild(listItem);
                 });
@@ -864,13 +939,13 @@
             lastLectureRibbon.classList.add('hidden');
             lastQuizRibbon.classList.add('hidden');
             try {
-                const response = await fetch(`${API_URL}?request=logs&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                const response = await fetch(`${API_URL}?request=userData&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
                 if (!response.ok) return;
-                const logs = await response.json();
-                if (logs.error || logs.length === 0) return;
+                const data = await response.json();
+                if (data.error || !data.logs || data.logs.length === 0) return;
 
-                const lastLecture = logs.find(log => log.eventType === 'ViewLecture');
-                const lastQuiz = logs.find(log => log.eventType === 'FinishQuiz');
+                const lastLecture = data.logs.find(log => log.eventType === 'ViewLecture');
+                const lastQuiz = data.logs.find(log => log.eventType === 'FinishQuiz');
 
                 if (lastLecture) {
                     lastLectureRibbon.innerHTML = `<i class="fas fa-video mr-2"></i> Last Lecture Viewed: <strong>${lastLecture.title}</strong>`;
@@ -892,12 +967,13 @@
             activityLogList.innerHTML = '<div class="loader"></div>';
 
             try {
-                const response = await fetch(`${API_URL}?request=logs&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                const response = await fetch(`${API_URL}?request=userData&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
                 if (!response.ok) throw new Error('Could not fetch activity logs.');
                 
-                fullActivityLog = await response.json();
-                if (fullActivityLog.error) throw new Error(fullActivityLog.error);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
                 
+                fullActivityLog = data.logs || [];
                 renderFilteredLog('all');
 
             } catch (error) {
@@ -908,7 +984,7 @@
 
         function renderFilteredLog(filter) {
             activityLogList.innerHTML = '';
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#activity-log-container .filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`log-filter-${filter}`).classList.add('active');
 
             allSummary.classList.add('hidden');
@@ -1485,5 +1561,3 @@
 
 </body>
 </html>
-
-
