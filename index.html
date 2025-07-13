@@ -51,6 +51,11 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             background-position: right center;
         }
+        .main-menu-btn.loading {
+            cursor: not-allowed;
+            background-image: none;
+            background-color: #9ca3af;
+        }
         .loader {
             border: 5px solid #f3f3f3;
             border-top: 5px solid #3498db;
@@ -647,7 +652,7 @@
             const chapters = {};
             lectureData.forEach(row => {
                 const chapterName = row.Chapter;
-                if (!chapterName || String(chapterName).length < 2 || String(chapterName).toLowerCase().startsWith('http')) {
+                if (!chapterName || String(chapterName).length < 2) {
                     return; 
                 }
                 if (!chapters[chapterName]) {
@@ -673,20 +678,16 @@
             return chapters;
         }
         
-        async function loadAllData() {
+        async function loadInitialData() {
             loginLoader.classList.remove('hidden');
             loginLoadingText.classList.remove('hidden');
             try {
-                const response = await fetch(`${API_URL}?request=allData&t=${new Date().getTime()}`);
+                const response = await fetch(`${API_URL}?request=initialData&t=${new Date().getTime()}`);
                 if (!response.ok) throw new Error('Network response was not ok.');
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
                 validUsers = data.users;
-                allQuestions = parseQuestions(data.questions);
-                groupedLectures = groupLecturesByChapter(data.lectures);
-
-                populateCustomExamOptions();
                 
                 loginLoader.classList.add('hidden');
                 loginLoadingText.classList.add('hidden');
@@ -694,6 +695,28 @@
             } catch (error) {
                 console.error("Error loading initial data:", error);
                 loginLoadingText.textContent = `Failed to load data. ${error.message}`;
+            }
+        }
+
+        async function loadContentData() {
+            try {
+                const response = await fetch(`${API_URL}?request=contentData&t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error('Network response was not ok.');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                allQuestions = parseQuestions(data.questions);
+                groupedLectures = groupLecturesByChapter(data.lectures);
+                
+                populateCustomExamOptions();
+                renderLectures();
+                lecturesLoader.classList.add('hidden');
+                qbankBtn.classList.remove('loading');
+                lecturesBtn.classList.remove('loading');
+
+            } catch (error) {
+                console.error("Error loading content data:", error);
+                lecturesLoader.textContent = `Failed to load content. ${error.message}`;
             }
         }
 
@@ -739,8 +762,8 @@
             if (user) {
                 currentUser = user;
                 loadUserProgress();
-                await loadUserData();
                 showMainMenuScreen();
+                await Promise.all([loadContentData(), loadUserData()]);
             } else {
                 loginError.classList.remove('hidden');
             }
@@ -1555,7 +1578,7 @@
         imageViewerCloseBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
         
         // --- INITIAL LOAD ---
-        loadAllData();
+        loadInitialData();
     });
     </script>
 
