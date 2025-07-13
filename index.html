@@ -112,7 +112,9 @@
     <div class="main-app-container">
         <!-- Global header with fixed title and home button -->
         <header id="global-header" class="p-4 md:p-6 bg-slate-800 text-white flex justify-between items-center hidden">
-            <img id="header-logo" src="https://raw.githubusercontent.com/doctorbishoy/Plasticology-/main/Plasticology%202025%20Logo%20white%20outline.png" alt="Logo" class="h-10">
+            <a href="https://www.surgerymastersacademy.com" target="_blank" title="Back to Main Website">
+                <img id="header-logo" src="https://raw.githubusercontent.com/doctorbishoy/Plasticology-/main/Plasticology%202025%20Logo%20white%20outline.png" alt="Logo" class="h-10">
+            </a>
             <div class="flex items-center gap-4">
                 <span id="user-name-display" class="text-base font-medium text-slate-200 hidden sm:block"></span>
                 <button id="activity-log-btn" class="text-white hover:text-slate-300 transition-colors text-2xl" title="Activity Log" aria-label="Activity Log">
@@ -133,7 +135,9 @@
             <!-- Login Screen -->
             <div id="login-container" class="w-full max-w-md mx-auto">
                 <div class="p-8">
-                    <img id="login-logo" src="https://raw.githubusercontent.com/doctorbishoy/Plasticology-/main/Plasticology%202025%20Logo%20white%20outline.png" alt="Logo" class="h-20 mx-auto mb-4">
+                    <a href="https://www.surgerymastersacademy.com" target="_blank" title="Go to Main Website">
+                        <img id="login-logo" src="https://raw.githubusercontent.com/doctorbishoy/Plasticology-/main/Plasticology%202025%20Logo%20white%20outline.png" alt="Logo" class="h-20 mx-auto mb-4">
+                    </a>
                     <h1 class="text-2xl md:text-3xl font-bold text-center text-slate-800">Plasticology Ultimate Edition</h1>
                     <p class="text-slate-600 font-semibold text-center mt-4">Together We Can</p>
                     <p class="text-slate-500 text-center mt-2 mb-6">Please log in to continue.</p>
@@ -425,10 +429,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- URLS FOR GOOGLE SHEETS ---
-        const GOOGLE_SHEET_QUESTIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4CnmOp_LY10Lp8-8lg4mLPVhyn5jCQoy1ruuz19HkRDO56jI51XMHo9i8Bp0O_MiwNjHBhoqFf6jB/pub?gid=0&single=true&output=csv';
-        const GOOGLE_SHEET_USERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4CnmOp_LY10Lp8-8lg4mLPVhyn5jCQoy1ruuz19HkRDO56jI51XMHo9i8Bp0O_MiwNjHBhoqFf6jB/pub?gid=1687708238&single=true&output=csv';
-        const GOOGLE_SHEET_LECTURES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4CnmOp_LY10Lp8-8lg4mLPVhyn5jCQoy1ruuz19HkRDO56jI51XMHo9i8Bp0O_MiwNjHBhoqFf6jB/pub?gid=1424524067&single=true&output=csv';
-        const LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJ6kN5grFIgLEbMjdhVII8HA9fWm0bm7q-LITWYG0bnP5wHO0IqEMr_A69irC1QoBRiw/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwJ6kN5grFIgLEbMjdhVII8HA9fWm0bm7q-LITWYG0bnP5wHO0IqEMr_A69irC1QoBRiw/exec';
         
         // --- APP DATA ---
         let allQuestions = [];
@@ -567,13 +568,13 @@
         // --- FUNCTIONS ---
 
         function logUserActivity(eventData) {
-            if (!LOG_SCRIPT_URL || !currentUser || currentUser.Role === 'Guest') return;
+            if (!API_URL || !currentUser || currentUser.Role === 'Guest') return;
             const payload = {
                 ...eventData,
                 userId: currentUser.UniqueID,
                 userName: currentUser.Name
             };
-            fetch(LOG_SCRIPT_URL, {
+            fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
@@ -581,36 +582,13 @@
             }).catch(error => console.error('Error logging activity:', error));
         }
 
-        function parseCSV(text) {
-            const lines = text.split(/\r\n|\n/);
-            if (lines.length === 0) return [];
-            const headers = lines[0].split(',').map(h => h.trim());
-            const data = [];
-            const csvRegex = /(?:"([^"]*(?:""[^"]*)*)"|([^,\r\n]+))/g;
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i]) continue;
-                let values = [];
-                let match;
-                while (match = csvRegex.exec(lines[i])) {
-                    values.push(match[1] ? match[1].replace(/""/g, '"') : match[2]);
-                }
-                if (values.length === 0) continue;
-                const row = {};
-                headers.forEach((header, index) => {
-                    row[header] = (values[index] || '').trim();
-                });
-                data.push(row);
-            }
-            return data;
-        }
-
-        function parseQuestionsCSV(data) {
-            return data.filter(row => row.Chapter && row.Chapter.trim() && row.Question && row.Question.trim()).map(row => {
+        function parseQuestions(data) {
+            return data.filter(row => row.Chapter && String(row.Chapter).trim() && row.Question && String(row.Question).trim()).map(row => {
                 const answerOptions = [];
-                if (row.CorrectAnswer && row.CorrectAnswer.trim() !== '') answerOptions.push({ text: row.CorrectAnswer, isCorrect: true, rationale: row.CorrectRationale || '' });
-                if (row.IncorrectAnswer1 && row.IncorrectAnswer1.trim() !== '') answerOptions.push({ text: row.IncorrectAnswer1, isCorrect: false, rationale: row.IncorrectRationale1 || '' });
-                if (row.IncorrectAnswer2 && row.IncorrectAnswer2.trim() !== '') answerOptions.push({ text: row.IncorrectAnswer2, isCorrect: false, rationale: row.IncorrectRationale2 || '' });
-                if (row.IncorrectAnswer3 && row.IncorrectAnswer3.trim() !== '') answerOptions.push({ text: row.IncorrectAnswer3, isCorrect: false, rationale: row.IncorrectRationale3 || '' });
+                if (row.CorrectAnswer && String(row.CorrectAnswer).trim() !== '') answerOptions.push({ text: row.CorrectAnswer, isCorrect: true, rationale: row.CorrectRationale || '' });
+                if (row.IncorrectAnswer1 && String(row.IncorrectAnswer1).trim() !== '') answerOptions.push({ text: row.IncorrectAnswer1, isCorrect: false, rationale: row.IncorrectRationale1 || '' });
+                if (row.IncorrectAnswer2 && String(row.IncorrectAnswer2).trim() !== '') answerOptions.push({ text: row.IncorrectAnswer2, isCorrect: false, rationale: row.IncorrectRationale2 || '' });
+                if (row.IncorrectAnswer3 && String(row.IncorrectAnswer3).trim() !== '') answerOptions.push({ text: row.IncorrectAnswer3, isCorrect: false, rationale: row.IncorrectRationale3 || '' });
                 return { chapter: row.Chapter, question: row.Question, hint: row.Hint || '', source: row.Source || '', ImageURL: row.ImageURL || '', answerOptions: answerOptions };
             });
         }
@@ -620,7 +598,7 @@
             const hasAlphabetic = /[a-zA-Z]/;
             lectureData.forEach(row => {
                 const chapterName = row.Chapter;
-                if (!chapterName || chapterName.length < 2 || chapterName.toLowerCase().startsWith('http') || !hasAlphabetic.test(chapterName)) {
+                if (!chapterName || String(chapterName).length < 2 || String(chapterName).toLowerCase().startsWith('http') || !hasAlphabetic.test(chapterName)) {
                     return; 
                 }
                 if (!chapters[chapterName]) {
@@ -645,52 +623,27 @@
             return chapters;
         }
 
-        function parseUsersCSV(data) {
-            return data.filter(row => row.UniqueID && row.Username).map(row => ({
-                UniqueID: row.UniqueID, Name: row.Name, Username: row.Username, Password: row.Password, Role: row.Role
-            }));
-        }
-        
-        async function fetchData(url) {
-             const response = await fetch(`${url}&t=${new Date().getTime()}`);
-             if (!response.ok) throw new Error(`Could not fetch data from ${url}.`);
-             const csvText = await response.text();
-             return parseCSV(csvText);
-        }
-
-        async function loadInitialData() {
+        async function loadAllData() {
             loginLoader.classList.remove('hidden');
             loginLoadingText.classList.remove('hidden');
             try {
-                const [userData, questionData] = await Promise.all([
-                    fetchData(GOOGLE_SHEET_USERS_URL),
-                    fetchData(GOOGLE_SHEET_QUESTIONS_URL)
-                ]);
-                validUsers = parseUsersCSV(userData);
-                allQuestions = parseQuestionsCSV(questionData);
+                const response = await fetch(`${API_URL}?request=allData&t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error('Network response was not ok.');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                validUsers = data.users;
+                allQuestions = parseQuestions(data.questions);
+                groupedLectures = groupLecturesByChapter(data.lectures);
+
+                populateCustomExamOptions();
+                
                 loginLoader.classList.add('hidden');
                 loginLoadingText.classList.add('hidden');
                 loginForm.classList.remove('hidden');
             } catch (error) {
-                console.error("Error loading initial data: ", error);
-                loginLoadingText.textContent = "Failed to load data. Please refresh.";
-            }
-        }
-
-        async function loadContentData() {
-            lecturesLoader.classList.remove('hidden');
-            lecturesList.classList.add('hidden');
-            try {
-                const lectureData = await fetchData(GOOGLE_SHEET_LECTURES_URL);
-                groupedLectures = groupLecturesByChapter(lectureData);
-                populateCustomExamOptions();
-                renderLectures();
-            } catch (error) {
-                console.error("Error loading lecture data: ", error);
-                lecturesList.innerHTML = `<p class="text-red-500 text-center col-span-full">${error.message}</p>`;
-            } finally {
-                lecturesLoader.classList.add('hidden');
-                lecturesList.classList.remove('hidden');
+                console.error("Error loading initial data:", error);
+                loginLoadingText.textContent = `Failed to load data. ${error.message}`;
             }
         }
 
@@ -720,7 +673,6 @@
                 currentUser = user;
                 loadUserProgress();
                 showMainMenuScreen();
-                await loadContentData();
             } else {
                 loginError.classList.remove('hidden');
             }
@@ -912,7 +864,7 @@
             lastLectureRibbon.classList.add('hidden');
             lastQuizRibbon.classList.add('hidden');
             try {
-                const response = await fetch(`${LOG_SCRIPT_URL}?userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                const response = await fetch(`${API_URL}?request=logs&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
                 if (!response.ok) return;
                 const logs = await response.json();
                 if (logs.error || logs.length === 0) return;
@@ -940,7 +892,7 @@
             activityLogList.innerHTML = '<div class="loader"></div>';
 
             try {
-                const response = await fetch(`${LOG_SCRIPT_URL}?userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                const response = await fetch(`${API_URL}?request=logs&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
                 if (!response.ok) throw new Error('Could not fetch activity logs.');
                 
                 fullActivityLog = await response.json();
@@ -1527,7 +1479,7 @@
         imageViewerCloseBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
         
         // --- INITIAL LOAD ---
-        loadInitialData();
+        loadAllData();
     });
     </script>
 
