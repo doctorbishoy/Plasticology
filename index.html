@@ -153,8 +153,8 @@
                     <p class="text-slate-600 font-semibold text-center mt-4">Together We Can</p>
                     <p class="text-slate-500 text-center mt-2 mb-6">Please log in to continue.</p>
                     <div id="login-loader" class="loader hidden"></div>
-                    <p id="login-loading-text" class="text-center text-slate-500 hidden">Loading data...</p>
-                    <form id="login-form" class="hidden">
+                    <p id="login-loading-text" class="text-center text-slate-500 hidden">Loading data for guests...</p>
+                    <form id="login-form">
                          <div class="mb-4">
                              <label for="username" class="block text-slate-700 text-sm font-bold mb-2">Username</label>
                              <input type="text" id="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -165,7 +165,7 @@
                          </div>
                          <p id="login-error" class="text-red-500 text-xs italic mb-4 hidden">Invalid username or password.</p>
                          <div class="flex flex-col gap-4">
-                             <button type="submit" class="action-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
+                             <button type="submit" id="login-submit-btn" class="action-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
                                  Log In
                              </button>
                              <div class="relative flex py-2 items-center">
@@ -196,7 +196,7 @@
                         <div id="last-quiz-ribbon" class="hidden p-3 bg-blue-100 border border-blue-200 text-blue-800 rounded-lg text-center text-sm font-medium"></div>
                     </div>
                     <p class="text-slate-500 text-center mb-8">Let’s get started – choose a section</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> <!-- CHANGED: Grid columns to 3 -->
                         <button id="lectures-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-teal-500 to-cyan-600">
                             <i class="fas fa-video text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">Lectures</span>
@@ -207,6 +207,27 @@
                             <span class="text-2xl font-bold">Question Bank</span>
                             <span class="font-light">Test Your Knowledge</span>
                         </button>
+                        <!-- ADDED: Library Button -->
+                        <button id="library-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-orange-500 to-amber-600 md:col-span-1">
+                            <i class="fas fa-book-bookmark text-5xl mb-4"></i>
+                            <span class="text-2xl font-bold">Library</span>
+                            <span class="font-light">View Resources</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Library Screen -->
+            <div id="library-container" class="w-full hidden">
+                <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
+                    <button id="library-back-btn" class="text-slate-700 hover:text-blue-600 transition-colors" title="Back"><i class="fas fa-arrow-left"></i> Back</button>
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-800">Resource Library</h2>
+                    <div class="w-16"></div> <!-- Spacer -->
+                </div>
+                <div class="p-4 md:p-6">
+                    <div id="library-loader" class="loader hidden"></div>
+                    <div id="library-list" class="space-y-4">
+                        <!-- Library books will be injected here -->
                     </div>
                 </div>
             </div>
@@ -324,7 +345,6 @@
                         <button id="log-filter-lectures" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Lectures</button>
                     </div>
                     
-                    <!-- Summary Cards for "All" -->
                     <div id="all-summary" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
                          <div class="bg-teal-100 p-4 rounded-lg text-center">
                             <p class="text-sm text-teal-800 font-semibold">Lectures Progress</p>
@@ -336,7 +356,6 @@
                         </div>
                     </div>
 
-                    <!-- Summary Cards for "Quizzes" -->
                     <div id="quiz-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden">
                         <div class="bg-green-100 p-4 rounded-lg text-center">
                             <p class="text-sm text-green-800 font-semibold">Total Correct Answers</p>
@@ -352,7 +371,6 @@
                         </div>
                     </div>
 
-                     <!-- Summary Cards for "Lectures" -->
                     <div id="lecture-summary" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
                          <div class="bg-indigo-100 p-4 rounded-lg text-center">
                             <p class="text-sm text-indigo-800 font-semibold">Lectures Viewed</p>
@@ -364,13 +382,11 @@
                         </div>
                     </div>
 
-                    <!-- Activity Chart -->
                     <div class="mb-6">
                         <canvas id="activity-chart"></canvas>
                     </div>
 
                     <div id="activity-log-list" class="space-y-3 max-h-[40vh] overflow-y-auto">
-                        <!-- Activity log items will be injected here -->
                     </div>
                 </div>
             </div>
@@ -466,19 +482,19 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- URLS FOR GOOGLE SHEETS ---
+        // --- URL FOR GOOGLE SHEETS ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbxS4JqdtlcCud_OO3zlWVeCQAUwg2Al1xG3QqITq24vEI5UolL5YL_W1kfnC5soOaiFcQ/exec';
         
         // --- APP DATA ---
         let allQuestions = [];
         let groupedLectures = {};
-        let validUsers = [];
+        let mcqBooks = []; // ADDED: To store library books
         let userQuizNotes = [];
         let userLectureNotes = [];
         let navigationHistory = [];
         let currentUser = null;
         let viewedLectures = new Set();
-        let fullActivityLog = []; // To store the fetched log once
+        let fullActivityLog = [];
         let activityChartInstance = null;
         let currentNote = { type: null, itemId: null };
 
@@ -489,8 +505,6 @@
         const activityLogBtn = document.getElementById('activity-log-btn');
         const notesBtn = document.getElementById('notes-btn');
         const userNameDisplay = document.getElementById('user-name-display');
-        
-        // Screens
         const loginContainer = document.getElementById('login-container');
         const mainMenuContainer = document.getElementById('main-menu-container');
         const lecturesContainer = document.getElementById('lectures-container');
@@ -499,35 +513,31 @@
         const quizContainer = document.getElementById('quiz-container');
         const activityLogContainer = document.getElementById('activity-log-container');
         const notesContainer = document.getElementById('notes-container');
-
-        // Login
+        const libraryContainer = document.getElementById('library-container'); // ADDED
         const loginForm = document.getElementById('login-form');
         const loginLoader = document.getElementById('login-loader');
         const loginLoadingText = document.getElementById('login-loading-text');
         const loginError = document.getElementById('login-error');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
+        const loginSubmitBtn = document.getElementById('login-submit-btn');
         const freeTestBtn = document.getElementById('free-test-btn');
-
-        // Main Menu
         const lecturesBtn = document.getElementById('lectures-btn');
         const qbankBtn = document.getElementById('qbank-btn');
+        const libraryBtn = document.getElementById('library-btn'); // ADDED
         const lastLectureRibbon = document.getElementById('last-lecture-ribbon');
         const lastQuizRibbon = document.getElementById('last-quiz-ribbon');
-
-        // Lectures Screen
+        const libraryBackBtn = document.getElementById('library-back-btn'); // ADDED
+        const libraryLoader = document.getElementById('library-loader'); // ADDED
+        const libraryList = document.getElementById('library-list'); // ADDED
         const lecturesBackBtn = document.getElementById('lectures-back-btn');
         const lectureSearchInput = document.getElementById('lecture-search-input');
         const lecturesLoader = document.getElementById('lectures-loader');
         const lecturesList = document.getElementById('lectures-list');
-
-        // Notes Screen
         const notesBackBtn = document.getElementById('notes-back-btn');
         const notesFilterQuizzes = document.getElementById('notes-filter-quizzes');
         const notesFilterLectures = document.getElementById('notes-filter-lectures');
         const notesList = document.getElementById('notes-list');
-
-        // Activity Log
         const activityBackBtn = document.getElementById('activity-back-btn');
         const allSummary = document.getElementById('all-summary');
         const quizSummary = document.getElementById('quiz-summary');
@@ -544,8 +554,6 @@
         const logFilterQuizzes = document.getElementById('log-filter-quizzes');
         const logFilterLectures = document.getElementById('log-filter-lectures');
         const activityChartCanvas = document.getElementById('activity-chart');
-
-        // Q-Bank Screen
         const qbankBackBtn = document.getElementById('qbank-back-btn');
         const loader = document.getElementById('loader');
         const loadingText = document.getElementById('loading-text');
@@ -559,13 +567,9 @@
         const mockError = document.getElementById('mock-error');
         const browseByChapterBtn = document.getElementById('browse-by-chapter-btn');
         const browseBySourceBtn = document.getElementById('browse-by-source-btn');
-
-        // List Screen
         const listBackBtn = document.getElementById('list-back-btn');
         const listTitle = document.getElementById('list-title');
         const listItems = document.getElementById('list-items');
-        
-        // Quiz Screen
         const quizTitle = document.getElementById('quiz-title');
         const timerDisplay = document.getElementById('timer');
         const progressText = document.getElementById('progress-text');
@@ -590,8 +594,6 @@
         const totalQuestionsSpan = document.getElementById('total-questions');
         const restartBtn = document.getElementById('restart-btn');
         const resultsHomeBtn = document.getElementById('results-home-btn');
-
-        // Modals
         const modalBackdrop = document.getElementById('modal-backdrop');
         const confirmationModal = document.getElementById('confirmation-modal');
         const modalConfirmBtn = document.getElementById('modal-confirm-btn');
@@ -631,13 +633,13 @@
             };
             fetch(API_URL, {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
+                mode: 'no-cors', // CHANGED: Try 'no-cors' for simple logging
                 body: JSON.stringify(payload)
             }).catch(error => console.error('Error logging activity:', error));
         }
 
         function parseQuestions(data) {
+            if (!data) return [];
             return data.filter(row => row.Chapter && String(row.Chapter).trim() && row.Question && String(row.Question).trim()).map(row => {
                 const answerOptions = [];
                 if (row.CorrectAnswer && String(row.CorrectAnswer).trim() !== '') answerOptions.push({ text: String(row.CorrectAnswer), isCorrect: true, rationale: row.CorrectRationale || '' });
@@ -649,6 +651,7 @@
         }
         
         function groupLecturesByChapter(lectureData) {
+            if (!lectureData) return {};
             const chapters = {};
             lectureData.forEach(row => {
                 const chapterName = row.Chapter;
@@ -677,46 +680,35 @@
             });
             return chapters;
         }
-        
-        async function loadInitialData() {
+
+        async function loadContentData() {
             loginLoader.classList.remove('hidden');
             loginLoadingText.classList.remove('hidden');
             try {
-                const response = await fetch(`${API_URL}?request=initialData&t=${new Date().getTime()}`);
-                if (!response.ok) throw new Error('Network response was not ok.');
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
+                const response = await fetch(`${API_URL}?request=contentData&t=${new Date().getTime()}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
 
-                validUsers = data.users;
+                if (!response.ok) throw new Error(`Network response was not ok. Status: ${response.status}`);
                 
-                loginLoader.classList.add('hidden');
-                loginLoadingText.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-            } catch (error) {
-                console.error("Error loading initial data:", error);
-                loginLoadingText.textContent = `Failed to load data. ${error.message}`;
-            }
-        }
-
-        async function loadContentData() {
-            try {
-                const response = await fetch(`${API_URL}?request=contentData&t=${new Date().getTime()}`);
-                if (!response.ok) throw new Error('Network response was not ok.');
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
                 allQuestions = parseQuestions(data.questions);
                 groupedLectures = groupLecturesByChapter(data.lectures);
+                mcqBooks = data.books || [];
                 
                 populateCustomExamOptions();
                 renderLectures();
-                lecturesLoader.classList.add('hidden');
-                qbankBtn.classList.remove('loading');
-                lecturesBtn.classList.remove('loading');
-
+                
+                loginLoader.classList.add('hidden');
+                loginLoadingText.classList.add('hidden');
+                
             } catch (error) {
                 console.error("Error loading content data:", error);
-                lecturesLoader.textContent = `Failed to load content. ${error.message}`;
+                loginLoadingText.textContent = `Failed to load content. Please ensure the script is deployed correctly and refresh. Error: ${error.message}`;
             }
         }
 
@@ -758,19 +750,47 @@
 
         async function handleLogin(event) {
             event.preventDefault();
-            const user = validUsers.find(u => u.Username === usernameInput.value && String(u.Password) === passwordInput.value);
-            if (user) {
-                currentUser = user;
-                loadUserProgress();
-                showMainMenuScreen();
-                await Promise.all([loadContentData(), loadUserData()]);
-            } else {
+            loginError.classList.add('hidden');
+            loginSubmitBtn.disabled = true;
+            loginSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Logging in...';
+
+            const payload = {
+                eventType: 'login',
+                username: usernameInput.value,
+                password: passwordInput.value
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(payload),
+                    redirect: 'follow' 
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentUser = result.user;
+                    loadUserProgress();
+                    await loadUserData();
+                    showMainMenuScreen();
+                } else {
+                    loginError.textContent = result.message || "Invalid username or password.";
+                    loginError.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Login API Error:", error);
+                loginError.textContent = "An error occurred. Please try again.";
                 loginError.classList.remove('hidden');
+            } finally {
+                loginSubmitBtn.disabled = false;
+                loginSubmitBtn.textContent = 'Log In';
             }
         }
         
         function showScreen(screenToShow, isGuest = false) {
-            [loginContainer, mainMenuContainer, lecturesContainer, qbankContainer, listContainer, quizContainer, activityLogContainer, notesContainer].forEach(screen => {
+            [loginContainer, mainMenuContainer, lecturesContainer, qbankContainer, listContainer, quizContainer, activityLogContainer, notesContainer, libraryContainer].forEach(screen => {
                 if(screen) screen.classList.add('hidden');
             });
             if(screenToShow) screenToShow.classList.remove('hidden');
@@ -799,7 +819,7 @@
             navigationHistory = [showMainMenuScreen];
             await fetchAndShowLastActivity();
         }
-
+        
         function showLecturesScreen() {
             showScreen(lecturesContainer);
             navigationHistory.push(showLecturesScreen);
@@ -810,12 +830,56 @@
             showScreen(qbankContainer);
             navigationHistory.push(showQbankScreen);
         }
+
+        function showLibraryScreen() {
+            showScreen(libraryContainer);
+            navigationHistory.push(showLibraryScreen);
+            renderBooks();
+        }
+
+        function renderBooks() {
+            libraryList.innerHTML = '';
+            if (mcqBooks.length === 0) {
+                libraryList.innerHTML = `<p class="text-slate-500 text-center">No books found in the library.</p>`;
+                return;
+            }
+
+            mcqBooks.forEach(book => {
+                if (!book.Book || !book.Link) return;
+                const bookElement = document.createElement('a');
+                bookElement.href = book.Link;
+                bookElement.target = '_blank';
+                bookElement.className = 'flex items-start p-4 bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200';
+
+                const iconHtml = `<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-orange-100 rounded-lg mr-4">
+                                      <i class="${book.icon || 'fas fa-book'} text-2xl text-orange-600"></i>
+                                  </div>`;
+                
+                const contentHtml = `<div class="flex-grow">
+                                         <h3 class="font-bold text-slate-800 text-lg">${book.Book}</h3>
+                                         <p class="text-slate-600 text-sm mt-1">${book.Description || ''}</p>
+                                     </div>`;
+
+                const arrowHtml = `<div class="flex-shrink-0 ml-4 self-center">
+                                       <i class="fas fa-external-link-alt text-slate-400"></i>
+                                   </div>`;
+
+                bookElement.innerHTML = iconHtml + contentHtml + arrowHtml;
+                libraryList.appendChild(bookElement);
+            });
+        }
         
         function renderLectures(filterText = '') {
             lecturesList.innerHTML = '';
             const lowerCaseFilter = filterText.toLowerCase();
             const chapterNames = Object.keys(groupedLectures).sort();
             let chaptersFound = 0;
+
+            if (Object.keys(groupedLectures).length === 0) {
+                lecturesLoader.classList.remove('hidden');
+                return;
+            }
+            lecturesLoader.classList.add('hidden');
 
             chapterNames.forEach(chapterName => {
                 const chapterData = groupedLectures[chapterName];
@@ -961,26 +1025,19 @@
             if (!currentUser || currentUser.Role === 'Guest') return;
             lastLectureRibbon.classList.add('hidden');
             lastQuizRibbon.classList.add('hidden');
-            try {
-                const response = await fetch(`${API_URL}?request=userData&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
-                if (!response.ok) return;
-                const data = await response.json();
-                if (data.error || !data.logs || data.logs.length === 0) return;
+            
+            if (fullActivityLog.length === 0) return;
 
-                const lastLecture = data.logs.find(log => log.eventType === 'ViewLecture');
-                const lastQuiz = data.logs.find(log => log.eventType === 'FinishQuiz');
+            const lastLecture = fullActivityLog.find(log => log.eventType === 'ViewLecture');
+            const lastQuiz = fullActivityLog.find(log => log.eventType === 'FinishQuiz');
 
-                if (lastLecture) {
-                    lastLectureRibbon.innerHTML = `<i class="fas fa-video mr-2"></i> Last Lecture Viewed: <strong>${lastLecture.title}</strong>`;
-                    lastLectureRibbon.classList.remove('hidden');
-                }
-                if (lastQuiz) {
-                    lastQuizRibbon.innerHTML = `<i class="fas fa-check-double mr-2"></i> Last Quiz: <strong>${lastQuiz.title}</strong> (Score: ${lastQuiz.score}/${lastQuiz.total})`;
-                    lastQuizRibbon.classList.remove('hidden');
-                }
-
-            } catch (error) {
-                console.error('Could not fetch last activity:', error);
+            if (lastLecture) {
+                lastLectureRibbon.innerHTML = `<i class="fas fa-video mr-2"></i> Last Lecture Viewed: <strong>${lastLecture.title}</strong>`;
+                lastLectureRibbon.classList.remove('hidden');
+            }
+            if (lastQuiz) {
+                lastQuizRibbon.innerHTML = `<i class="fas fa-check-double mr-2"></i> Last Quiz: <strong>${lastQuiz.title}</strong> (Score: ${lastQuiz.score}/${lastQuiz.total})`;
+                lastQuizRibbon.classList.remove('hidden');
             }
         }
 
@@ -989,19 +1046,10 @@
             navigationHistory.push(showActivityLog);
             activityLogList.innerHTML = '<div class="loader"></div>';
 
-            try {
-                const response = await fetch(`${API_URL}?request=userData&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
-                if (!response.ok) throw new Error('Could not fetch activity logs.');
-                
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-                
-                fullActivityLog = data.logs || [];
+            if (fullActivityLog.length > 0) {
                 renderFilteredLog('all');
-
-            } catch (error) {
-                console.error('Error loading activity log:', error);
-                activityLogList.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+            } else {
+                 activityLogList.innerHTML = `<p class="text-center text-slate-500">No activity recorded yet.</p>`;
             }
         }
 
@@ -1521,12 +1569,14 @@
         freeTestBtn.addEventListener('click', startFreeTest);
         lecturesBtn.addEventListener('click', showLecturesScreen);
         qbankBtn.addEventListener('click', showQbankScreen);
+        libraryBtn.addEventListener('click', showLibraryScreen); // ADDED
         
         // Back Buttons
         lecturesBackBtn.addEventListener('click', handleBackNavigation);
         qbankBackBtn.addEventListener('click', handleBackNavigation);
         listBackBtn.addEventListener('click', handleBackNavigation);
         activityBackBtn.addEventListener('click', handleBackNavigation);
+        libraryBackBtn.addEventListener('click', handleBackNavigation); // ADDED
 
         // Global Header
         globalHomeBtn.addEventListener('click', () => {
@@ -1578,9 +1628,11 @@
         imageViewerCloseBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
         
         // --- INITIAL LOAD ---
-        loadInitialData();
+        loadContentData();
     });
     </script>
 
 </body>
 </html>
+
+
