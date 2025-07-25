@@ -1430,6 +1430,9 @@
             } else {
                 timerDisplay.textContent = 'Review';
             }
+            
+            const hasNote = userQuizNotes.some(note => note.QuizID === currentQuestion.UniqueID);
+            quizNoteBtn.classList.toggle('has-note', hasNote);
         }
 
         function startTimer() {
@@ -1679,6 +1682,105 @@
                 progressText.textContent = `Error: ${error.message}`;
             }
         }
+        
+        // --- NOTES FUNCTIONS ---
+        function showNotesScreen() {
+            showScreen(notesContainer);
+            navigationHistory.push(showNotesScreen);
+            renderNotes('quizzes'); // Default to quiz notes
+        }
+
+        function renderNotes(filter) {
+            notesList.innerHTML = '';
+            document.querySelectorAll('#notes-container .filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`notes-filter-${filter}`).classList.add('active');
+
+            const notesToDisplay = filter === 'quizzes' ? userQuizNotes : userLectureNotes;
+
+            if (notesToDisplay.length === 0) {
+                notesList.innerHTML = `<p class="text-center text-slate-500">No notes found for this category.</p>`;
+                return;
+            }
+
+            notesToDisplay.forEach(note => {
+                const noteItem = document.createElement('div');
+                noteItem.className = 'p-4 bg-white rounded-lg border border-slate-200 shadow-sm';
+                
+                let title = 'Note';
+                if (filter === 'quizzes') {
+                    const question = allQuestions.find(q => q.UniqueID === note.QuizID);
+                    title = question ? `Note on: ${question.question.substring(0, 50)}...` : 'Note on deleted question';
+                } else {
+                    // This part will be completed when we activate lecture notes
+                    title = `Note on: Lecture ID ${note.LectureID}`;
+                }
+
+                noteItem.innerHTML = `
+                    <h4 class="font-bold text-slate-700">${title}</h4>
+                    <p class="text-slate-600 mt-2 whitespace-pre-wrap">${note.NoteText}</p>
+                `;
+                notesList.appendChild(noteItem);
+            });
+        }
+
+        function openNoteModal(type, itemId, itemTitle) {
+            currentNote = { type, itemId, itemTitle };
+            let existingNote;
+
+            if (type === 'quiz') {
+                noteModalTitle.textContent = `Note on: ${itemTitle.substring(0, 40)}...`;
+                existingNote = userQuizNotes.find(n => n.QuizID === itemId);
+            } else { // 'lecture'
+                noteModalTitle.textContent = `Note on: ${itemTitle}`;
+                existingNote = userLectureNotes.find(n => n.LectureID === itemId);
+            }
+
+            noteTextarea.value = existingNote ? existingNote.NoteText : '';
+            modalBackdrop.classList.remove('hidden');
+            noteModal.classList.remove('hidden');
+        }
+
+        function handleSaveNote() {
+            const noteText = noteTextarea.value;
+            const isNewNote = currentNote.type === 'quiz'
+                ? !userQuizNotes.some(n => n.QuizID === currentNote.itemId)
+                : !userLectureNotes.some(n => n.LectureID === currentNote.itemId);
+
+            const payload = {
+                eventType: currentNote.type === 'quiz' ? 'saveQuizNote' : 'saveLectureNote',
+                uniqueId: `${currentUser.UniqueID}_${currentNote.itemId}`,
+                userId: currentUser.UniqueID,
+                itemId: currentNote.itemId,
+                noteText: noteText
+            };
+
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Failed to save note:", err));
+
+            // Update local data for immediate UI feedback
+            if (currentNote.type === 'quiz') {
+                if (isNewNote) {
+                    userQuizNotes.push({ QuizID: currentNote.itemId, NoteText: noteText });
+                } else {
+                    userQuizNotes.find(n => n.QuizID === currentNote.itemId).NoteText = noteText;
+                }
+                quizNoteBtn.classList.toggle('has-note', noteText.length > 0);
+            } else {
+                if (isNewNote) {
+                    userLectureNotes.push({ LectureID: currentNote.itemId, NoteText: noteText });
+                } else {
+                    userLectureNotes.find(n => n.LectureID === currentNote.itemId).NoteText = noteText;
+                }
+                renderLectures(lectureSearchInput.value); // Re-render to update icon
+            }
+
+            modalBackdrop.classList.add('hidden');
+            noteModal.classList.add('hidden');
+        }
+
 
         // --- EVENT LISTENERS ---
         loginForm.addEventListener('submit', handleLogin);
@@ -1686,12 +1788,14 @@
         lecturesBtn.addEventListener('click', showLecturesScreen);
         qbankBtn.addEventListener('click', showQbankScreen);
         libraryBtn.addEventListener('click', showLibraryScreen);
+        notesBtn.addEventListener('click', showNotesScreen); // Activate main notes button
         
         lecturesBackBtn.addEventListener('click', handleBackNavigation);
         qbankBackBtn.addEventListener('click', handleBackNavigation);
         listBackBtn.addEventListener('click', handleBackNavigation);
         activityBackBtn.addEventListener('click', handleBackNavigation);
         libraryBackBtn.addEventListener('click', handleBackNavigation);
+        notesBackBtn.addEventListener('click', handleBackNavigation);
 
         globalHomeBtn.addEventListener('click', () => {
             if (currentUser && currentUser.Role === 'Guest') {
@@ -1707,6 +1811,9 @@
         logFilterAll.addEventListener('click', () => renderFilteredLog('all'));
         logFilterQuizzes.addEventListener('click', () => renderFilteredLog('quizzes'));
         logFilterLectures.addEventListener('click', () => renderFilteredLog('lectures'));
+
+        notesFilterQuizzes.addEventListener('click', () => renderNotes('quizzes'));
+        notesFilterLectures.addEventListener('click', () => renderNotes('lectures'));
 
         lectureSearchInput.addEventListener('keyup', (e) => renderLectures(e.target.value));
 
@@ -1731,11 +1838,22 @@
         });
         reviewIncorrectBtn.addEventListener('click', startIncorrectReview);
 
+        // Activate note button in quiz
+        quizNoteBtn.addEventListener('click', () => {
+            const currentQuestion = currentQuizQuestions[currentQuestionIndex];
+            openNoteModal('quiz', currentQuestion.UniqueID, currentQuestion.question);
+        });
+
         modalCancelBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
         modalConfirmBtn.addEventListener('click', () => { if (modalConfirmAction) modalConfirmAction(); });
         navigatorBtn.addEventListener('click', showQuestionNavigator);
         navigatorCloseBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
         imageViewerCloseBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
+        noteCancelBtn.addEventListener('click', () => {
+            modalBackdrop.classList.add('hidden');
+            noteModal.classList.add('hidden');
+        });
+        noteSaveBtn.addEventListener('click', handleSaveNote);
         
         // --- INITIAL LOAD ---
         loadContentData();
