@@ -629,13 +629,9 @@
             
             const now = new Date();
             let newLogEntry = null;
-            const payload = {
-                ...eventData,
-                userId: currentUser.UniqueID,
-                userName: currentUser.Name
-            };
+            const payload = { ...eventData }; 
 
-            if (eventData.eventType === 'FinishQuiz') {
+            if (payload.eventType === 'FinishQuiz') {
                 const details = originalQuizQuestions.map((q, index) => {
                     return {
                         qID: q.UniqueID,
@@ -648,9 +644,9 @@
                     logId: now.toISOString(),
                     timestamp: now,
                     eventType: 'FinishQuiz',
-                    title: eventData.quizTitle,
-                    score: eventData.score,
-                    total: eventData.totalQuestions,
+                    title: payload.quizTitle,
+                    score: payload.score,
+                    total: payload.totalQuestions,
                     isReviewable: true
                 };
             }
@@ -1403,9 +1399,9 @@
 
             flagBtn.classList.toggle('flagged', flaggedIndices.has(currentQuestionIndex));
             
-            const answersToShow = [...currentQuestion.answerOptions];
+            const shuffledAnswers = [...currentQuestion.answerOptions].sort(() => Math.random() - 0.5);
             
-            answersToShow.forEach(answer => {
+            shuffledAnswers.forEach(answer => {
                 const buttonContainer = document.createElement('div');
                 const button = document.createElement('button');
                 button.textContent = answer.text;
