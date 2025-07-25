@@ -96,6 +96,7 @@
         /* Styles from previous MCQ bank */
         .answer-btn.correct { background-color: #d1fae5; border-color: #10b981; color: #065f46; }
         .answer-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .answer-btn.user-choice { border-width: 3px; } /* Style for user's incorrect choice in review mode */
         .answer-btn:disabled { opacity: 0.8; cursor: not-allowed; }
         .rationale { visibility: hidden; opacity: 0; max-height: 0; transition: all 0.3s ease-in-out; overflow: hidden; }
         .rationale.visible { visibility: visible; opacity: 1; max-height: 150px; }
@@ -196,7 +197,7 @@
                         <div id="last-quiz-ribbon" class="hidden p-3 bg-blue-100 border border-blue-200 text-blue-800 rounded-lg text-center text-sm font-medium"></div>
                     </div>
                     <p class="text-slate-500 text-center mb-8">Let’s get started – choose a section</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> <!-- CHANGED: Grid columns to 3 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <button id="lectures-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-teal-500 to-cyan-600">
                             <i class="fas fa-video text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">Lectures</span>
@@ -207,7 +208,6 @@
                             <span class="text-2xl font-bold">Question Bank</span>
                             <span class="font-light">Test Your Knowledge</span>
                         </button>
-                        <!-- ADDED: Library Button -->
                         <button id="library-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-orange-500 to-amber-600 md:col-span-1">
                             <i class="fas fa-book-bookmark text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">Library</span>
@@ -227,7 +227,6 @@
                 <div class="p-4 md:p-6">
                     <div id="library-loader" class="loader hidden"></div>
                     <div id="library-list" class="space-y-4">
-                        <!-- Library books will be injected here -->
                     </div>
                 </div>
             </div>
@@ -246,7 +245,6 @@
                     </div>
                     <div id="lectures-loader" class="loader"></div>
                     <div id="lectures-list" class="space-y-4">
-                        <!-- Lecture accordions will be injected here -->
                     </div>
                 </div>
             </div>
@@ -259,7 +257,6 @@
                     <div class="w-16"></div> <!-- Spacer -->
                 </div>
                 <div id="qbank-controls">
-                    <!-- Mock Exam Section -->
                     <div class="p-6 md:p-8 border-b border-slate-200">
                         <div id="loader" class="loader hidden"></div>
                         <p id="loading-text" class="text-slate-500 mt-2 text-center hidden">Loading questions...</p>
@@ -292,7 +289,6 @@
                         </button>
                         <p id="mock-error" class="text-red-500 text-xs italic mt-2 hidden"></p>
                     </div>
-                    <!-- Browse Section -->
                     <div class="p-6 md:p-8">
                         <h3 class="text-xl font-bold text-slate-800 mb-4">Browse Questions</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -326,7 +322,6 @@
                         <button id="notes-filter-lectures" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Lecture Notes</button>
                     </div>
                     <div id="notes-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
-                        <!-- Notes will be injected here -->
                     </div>
                 </div>
             </div>
@@ -436,9 +431,11 @@
                     <div id="results-container" class="hidden text-center p-6">
                         <h2 class="text-3xl font-bold text-slate-800">Quiz Complete!</h2>
                         <p class="text-xl mt-4">Your score is <span id="score-text" class="font-bold"></span> out of <span id="total-questions" class="font-bold"></span>.</p>
-                        <div class="mt-8 flex justify-center gap-4">
+                        <div id="results-buttons" class="mt-8 flex flex-wrap justify-center gap-4">
                             <button id="results-home-btn" class="action-btn bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700">Go to Home</button>
                             <button id="restart-btn" class="action-btn bg-slate-800 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-900">Restart Quiz</button>
+                            <!-- ADDED: Review Incorrect Answers Button -->
+                            <button id="review-incorrect-btn" class="action-btn bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 hidden">Review Incorrect</button>
                         </div>
                     </div>
                 </div>
@@ -488,7 +485,7 @@
         // --- APP DATA ---
         let allQuestions = [];
         let groupedLectures = {};
-        let mcqBooks = []; // ADDED: To store library books
+        let mcqBooks = [];
         let userQuizNotes = [];
         let userLectureNotes = [];
         let navigationHistory = [];
@@ -513,7 +510,7 @@
         const quizContainer = document.getElementById('quiz-container');
         const activityLogContainer = document.getElementById('activity-log-container');
         const notesContainer = document.getElementById('notes-container');
-        const libraryContainer = document.getElementById('library-container'); // ADDED
+        const libraryContainer = document.getElementById('library-container');
         const loginForm = document.getElementById('login-form');
         const loginLoader = document.getElementById('login-loader');
         const loginLoadingText = document.getElementById('login-loading-text');
@@ -524,12 +521,12 @@
         const freeTestBtn = document.getElementById('free-test-btn');
         const lecturesBtn = document.getElementById('lectures-btn');
         const qbankBtn = document.getElementById('qbank-btn');
-        const libraryBtn = document.getElementById('library-btn'); // ADDED
+        const libraryBtn = document.getElementById('library-btn');
         const lastLectureRibbon = document.getElementById('last-lecture-ribbon');
         const lastQuizRibbon = document.getElementById('last-quiz-ribbon');
-        const libraryBackBtn = document.getElementById('library-back-btn'); // ADDED
-        const libraryLoader = document.getElementById('library-loader'); // ADDED
-        const libraryList = document.getElementById('library-list'); // ADDED
+        const libraryBackBtn = document.getElementById('library-back-btn');
+        const libraryLoader = document.getElementById('library-loader');
+        const libraryList = document.getElementById('library-list');
         const lecturesBackBtn = document.getElementById('lectures-back-btn');
         const lectureSearchInput = document.getElementById('lecture-search-input');
         const lecturesLoader = document.getElementById('lectures-loader');
@@ -594,6 +591,7 @@
         const totalQuestionsSpan = document.getElementById('total-questions');
         const restartBtn = document.getElementById('restart-btn');
         const resultsHomeBtn = document.getElementById('results-home-btn');
+        const reviewIncorrectBtn = document.getElementById('review-incorrect-btn'); // ADDED
         const modalBackdrop = document.getElementById('modal-backdrop');
         const confirmationModal = document.getElementById('confirmation-modal');
         const modalConfirmBtn = document.getElementById('modal-confirm-btn');
@@ -615,10 +613,13 @@
         let currentQuestionIndex = 0;
         let score = 0;
         let currentQuizQuestions = [];
+        let originalQuizQuestions = []; // To hold the full quiz list for review
+        let originalUserAnswers = [];   // To hold the full answer list for review
         let timerInterval;
         let flaggedIndices = new Set();
         let userAnswers = [];
         let modalConfirmAction = null;
+        let isReviewMode = false; // ADDED: Flag for review mode
         const DEFAULT_TIME_PER_QUESTION = 45;
         let currentQuizTimePerQuestion = DEFAULT_TIME_PER_QUESTION;
 
@@ -633,7 +634,7 @@
             };
             fetch(API_URL, {
                 method: 'POST',
-                mode: 'no-cors', // CHANGED: Try 'no-cors' for simple logging
+                mode: 'no-cors',
                 body: JSON.stringify(payload)
             }).catch(error => console.error('Error logging activity:', error));
         }
@@ -1311,18 +1312,27 @@
             launchQuiz(mockQuestions, "Custom Mock Exam", timePerQuestion);
         }
 
-        function launchQuiz(questions, title, timePerQuestion = DEFAULT_TIME_PER_QUESTION) {
+        function launchQuiz(questions, title, timePerQuestion = DEFAULT_TIME_PER_QUESTION, reviewMode = false) {
+            isReviewMode = reviewMode;
             showScreen(quizContainer, currentUser.Role === 'Guest');
             currentQuestionIndex = 0;
             score = 0;
             currentQuizQuestions = questions;
-            currentQuizTimePerQuestion = timePerQuestion;
+            
+            if (!isReviewMode) {
+                originalQuizQuestions = [...questions]; // Save the original questions for review
+                userAnswers = new Array(questions.length).fill(null);
+                originalUserAnswers = userAnswers; // Link original answers
+            } else {
+                // In review mode, we don't reset userAnswers. We use the original ones.
+                userAnswers = originalUserAnswers;
+            }
+
             flaggedIndices.clear();
-            userAnswers = new Array(questions.length).fill(null);
             resultsContainer.classList.add('hidden');
             questionContainer.classList.remove('hidden');
             controlsContainer.classList.remove('hidden');
-            quizTitle.textContent = title;
+            quizTitle.textContent = isReviewMode ? `Review: ${title}` : title;
             totalQuestionsSpan.textContent = currentQuizQuestions.length;
             updateScoreBar();
             showQuestion();
@@ -1357,16 +1367,27 @@
             sourceText.textContent = `Source: ${currentQuestion.source || 'N/A'} | Chapter: ${currentQuestion.chapter || 'N/A'}`;
             previousBtn.disabled = currentQuestionIndex === 0;
             previousBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
-            nextSkipBtn.disabled = currentQuestionIndex === currentQuizQuestions.length - 1;
-            nextSkipBtn.classList.toggle('opacity-50', currentQuestionIndex === currentQuizQuestions.length - 1);
+            
+            // In review mode, the "Next" button should say "Finish" on the last question.
+            if (isReviewMode && currentQuestionIndex === currentQuizQuestions.length - 1) {
+                nextSkipBtn.textContent = 'Finish Review';
+            } else {
+                nextSkipBtn.textContent = 'Next';
+            }
+            nextSkipBtn.disabled = currentQuestionIndex === currentQuizQuestions.length - 1 && !isReviewMode;
+            nextSkipBtn.classList.toggle('opacity-50', currentQuestionIndex === currentQuizQuestions.length - 1 && !isReviewMode);
+
             flagBtn.classList.toggle('flagged', flaggedIndices.has(currentQuestionIndex));
-            const shuffledAnswers = [...currentQuestion.answerOptions].sort(() => Math.random() - 0.5);
-            shuffledAnswers.forEach(answer => {
+            
+            const answersToShow = isReviewMode ? [...currentQuestion.answerOptions] : [...currentQuestion.answerOptions].sort(() => Math.random() - 0.5);
+            
+            answersToShow.forEach(answer => {
                 const buttonContainer = document.createElement('div');
                 const button = document.createElement('button');
                 button.textContent = answer.text;
                 button.className = 'answer-btn w-full text-left p-4 rounded-lg bg-slate-100 hover:bg-slate-200 border-2 border-transparent';
                 button.dataset.correct = answer.isCorrect;
+                button.dataset.text = answer.text; // Store text for comparison in review mode
                 button.addEventListener('click', (e) => selectAnswer(e, answer));
                 const rationale = document.createElement('p');
                 rationale.textContent = answer.rationale;
@@ -1375,9 +1396,16 @@
                 buttonContainer.appendChild(rationale);
                 answerButtons.appendChild(buttonContainer);
             });
-            if (userAnswers[currentQuestionIndex] !== null) showAnswerResult();
-            hintText.textContent = currentQuestion.hint;
-            startTimer();
+
+            if (userAnswers[currentQuestionIndex] !== null || isReviewMode) {
+                showAnswerResult();
+            }
+            
+            if (!isReviewMode) {
+                startTimer();
+            } else {
+                timerDisplay.textContent = 'Review';
+            }
         }
 
         function startTimer() {
@@ -1418,6 +1446,8 @@
         }
 
         function selectAnswer(e, selectedAnswer) {
+            if (isReviewMode) return; // Disable selecting answers in review mode
+
             clearInterval(timerInterval);
             if(userAnswers[currentQuestionIndex] === null && selectedAnswer.isCorrect) {
                 score++;
@@ -1431,18 +1461,23 @@
         }
         
         function showAnswerResult() {
+            const userAnswer = userAnswers[currentQuestionIndex];
             Array.from(answerButtons.children).forEach(buttonContainer => {
                 const button = buttonContainer.querySelector('button');
                 const rationale = buttonContainer.querySelector('p');
+                button.disabled = true;
+
                 if (button.dataset.correct === 'true') {
                     button.classList.add('correct');
-                    rationale.classList.add('bg-green-100');
+                    rationale.classList.add('bg-green-100', 'visible');
                 } else {
-                    button.classList.add('incorrect');
-                    rationale.classList.add('bg-red-100');
+                    if (isReviewMode && userAnswer && button.dataset.text === userAnswer.answer) {
+                        button.classList.add('incorrect', 'user-choice'); // Highlight user's wrong choice
+                    } else {
+                         button.classList.add('incorrect');
+                    }
+                    rationale.classList.add('bg-red-100', 'visible');
                 }
-                rationale.classList.add('visible');
-                button.disabled = true;
             });
             hintBtn.classList.add('hidden');
         }
@@ -1454,18 +1489,31 @@
             scoreText.textContent = score;
             progressText.textContent = "Quiz Finished!";
             
-            logUserActivity({
-                eventType: 'FinishQuiz',
-                quizTitle: quizTitle.textContent,
-                score: score,
-                totalQuestions: currentQuizQuestions.length
-            });
+            const incorrectCount = originalUserAnswers.filter(a => a && !a.isCorrect).length;
+            if (incorrectCount > 0) {
+                reviewIncorrectBtn.classList.remove('hidden');
+                reviewIncorrectBtn.textContent = `Review ${incorrectCount} Incorrect`;
+            } else {
+                reviewIncorrectBtn.classList.add('hidden');
+            }
+
+            if (!isReviewMode) {
+                logUserActivity({
+                    eventType: 'FinishQuiz',
+                    quizTitle: quizTitle.textContent,
+                    score: score,
+                    totalQuestions: currentQuizQuestions.length
+                });
+            }
         }
 
         function handleNextQuestion() {
             if (currentQuestionIndex < currentQuizQuestions.length - 1) {
                 currentQuestionIndex++;
                 showQuestion();
+            } else if (isReviewMode) {
+                // If it's the end of the review, go back to the results screen
+                showResults();
             }
         }
         
@@ -1539,6 +1587,10 @@
         }
         
         function triggerEndQuiz() {
+            if (isReviewMode) {
+                showResults();
+                return;
+            }
             showConfirmationModal('End Quiz?', 'Are you sure you want to end the quiz?', () => {
                 modalBackdrop.classList.add('hidden');
                 showResults();
@@ -1564,19 +1616,27 @@
             launchQuiz(sampleQuestions, "Free Sample Test");
         }
 
+        function startIncorrectReview() {
+            const incorrectQuestions = originalQuizQuestions.filter((question, index) => {
+                const answer = originalUserAnswers[index];
+                return answer && !answer.isCorrect;
+            });
+            launchQuiz(incorrectQuestions, quizTitle.textContent.replace('Review: ', ''), undefined, true);
+        }
+
         // --- EVENT LISTENERS ---
         loginForm.addEventListener('submit', handleLogin);
         freeTestBtn.addEventListener('click', startFreeTest);
         lecturesBtn.addEventListener('click', showLecturesScreen);
         qbankBtn.addEventListener('click', showQbankScreen);
-        libraryBtn.addEventListener('click', showLibraryScreen); // ADDED
+        libraryBtn.addEventListener('click', showLibraryScreen);
         
         // Back Buttons
         lecturesBackBtn.addEventListener('click', handleBackNavigation);
         qbankBackBtn.addEventListener('click', handleBackNavigation);
         listBackBtn.addEventListener('click', handleBackNavigation);
         activityBackBtn.addEventListener('click', handleBackNavigation);
-        libraryBackBtn.addEventListener('click', handleBackNavigation); // ADDED
+        libraryBackBtn.addEventListener('click', handleBackNavigation);
 
         // Global Header
         globalHomeBtn.addEventListener('click', () => {
@@ -1610,7 +1670,7 @@
         endQuizBtn.addEventListener('click', triggerEndQuiz);
         previousBtn.addEventListener('click', handlePreviousQuestion);
         nextSkipBtn.addEventListener('click', handleNextQuestion);
-        restartBtn.addEventListener('click', () => launchQuiz(currentQuizQuestions, quizTitle.textContent, currentQuizTimePerQuestion));
+        restartBtn.addEventListener('click', () => launchQuiz(originalQuizQuestions, quizTitle.textContent.replace('Review: ', '')));
         resultsHomeBtn.addEventListener('click', () => {
             if (currentUser.Role === 'Guest') {
                 showScreen(loginContainer);
@@ -1619,6 +1679,7 @@
                 showMainMenuScreen();
             }
         });
+        reviewIncorrectBtn.addEventListener('click', startIncorrectReview); // ADDED
 
         // Modals
         modalCancelBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
@@ -1634,5 +1695,3 @@
 
 </body>
 </html>
-
-
