@@ -492,7 +492,7 @@
         let viewedLectures = new Set();
         let fullActivityLog = [];
         let activityChartInstance = null;
-        let currentNote = { type: null, itemId: null };
+        let currentNote = { type: null, itemId: null, itemTitle: null };
 
         // --- DOM ELEMENTS ---
         const globalHeader = document.getElementById('global-header');
@@ -629,7 +629,11 @@
             
             const now = new Date();
             let newLogEntry = null;
-            const payload = { ...eventData }; 
+            const payload = { 
+                ...eventData,
+                userId: currentUser.UniqueID,
+                userName: currentUser.Name
+            }; 
 
             if (payload.eventType === 'FinishQuiz') {
                 const details = originalQuizQuestions.map((q, index) => {
@@ -1067,7 +1071,7 @@
             showScreen(activityLogContainer);
             navigationHistory.push(showActivityLog);
             activityLogList.innerHTML = '<div class="loader"></div>';
-            await loadUserData(); // FIXED: Refresh user data every time log is opened
+            await loadUserData();
             renderFilteredLog('all');
         }
 
