@@ -434,7 +434,6 @@
                         <div id="results-buttons" class="mt-8 flex flex-wrap justify-center gap-4">
                             <button id="results-home-btn" class="action-btn bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700">Go to Home</button>
                             <button id="restart-btn" class="action-btn bg-slate-800 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-900">Restart Quiz</button>
-                            <!-- ADDED: Review Incorrect Answers Button -->
                             <button id="review-incorrect-btn" class="action-btn bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 hidden">Review Incorrect</button>
                         </div>
                     </div>
@@ -591,7 +590,7 @@
         const totalQuestionsSpan = document.getElementById('total-questions');
         const restartBtn = document.getElementById('restart-btn');
         const resultsHomeBtn = document.getElementById('results-home-btn');
-        const reviewIncorrectBtn = document.getElementById('review-incorrect-btn'); // ADDED
+        const reviewIncorrectBtn = document.getElementById('review-incorrect-btn');
         const modalBackdrop = document.getElementById('modal-backdrop');
         const confirmationModal = document.getElementById('confirmation-modal');
         const modalConfirmBtn = document.getElementById('modal-confirm-btn');
@@ -613,13 +612,13 @@
         let currentQuestionIndex = 0;
         let score = 0;
         let currentQuizQuestions = [];
-        let originalQuizQuestions = []; // To hold the full quiz list for review
-        let originalUserAnswers = [];   // To hold the full answer list for review
+        let originalQuizQuestions = [];
+        let originalUserAnswers = [];
         let timerInterval;
         let flaggedIndices = new Set();
         let userAnswers = [];
         let modalConfirmAction = null;
-        let isReviewMode = false; // ADDED: Flag for review mode
+        let isReviewMode = false;
         const DEFAULT_TIME_PER_QUESTION = 45;
         let currentQuizTimePerQuestion = DEFAULT_TIME_PER_QUESTION;
 
@@ -627,15 +626,43 @@
 
         function logUserActivity(eventData) {
             if (!API_URL || !currentUser || currentUser.Role === 'Guest') return;
+            
+            const now = new Date();
+            let newLogEntry = null;
             const payload = {
                 ...eventData,
                 userId: currentUser.UniqueID,
                 userName: currentUser.Name
             };
+
+            if (eventData.eventType === 'FinishQuiz') {
+                const details = originalQuizQuestions.map((q, index) => {
+                    return {
+                        qID: q.UniqueID,
+                        ans: originalUserAnswers[index] ? originalUserAnswers[index].answer : 'No Answer'
+                    };
+                });
+                payload.details = JSON.stringify(details);
+
+                newLogEntry = {
+                    logId: now.toISOString(),
+                    timestamp: now,
+                    eventType: 'FinishQuiz',
+                    title: eventData.quizTitle,
+                    score: eventData.score,
+                    total: eventData.totalQuestions,
+                    isReviewable: true
+                };
+            }
+
             fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify(payload)
+            }).then(() => {
+                if (newLogEntry) {
+                    fullActivityLog.unshift(newLogEntry);
+                }
             }).catch(error => console.error('Error logging activity:', error));
         }
 
@@ -656,9 +683,7 @@
             const chapters = {};
             lectureData.forEach(row => {
                 const chapterName = row.Chapter;
-                if (!chapterName || String(chapterName).length < 2) {
-                    return; 
-                }
+                if (!chapterName || String(chapterName).length < 2) return;
                 if (!chapters[chapterName]) {
                     chapters[chapterName] = { topics: [], mock: null, icon: '' };
                 }
@@ -1046,12 +1071,8 @@
             showScreen(activityLogContainer);
             navigationHistory.push(showActivityLog);
             activityLogList.innerHTML = '<div class="loader"></div>';
-
-            if (fullActivityLog.length > 0) {
-                renderFilteredLog('all');
-            } else {
-                 activityLogList.innerHTML = `<p class="text-center text-slate-500">No activity recorded yet.</p>`;
-            }
+            await loadUserData(); // FIXED: Refresh user data every time log is opened
+            renderFilteredLog('all');
         }
 
         function renderFilteredLog(filter) {
@@ -1122,40 +1143,49 @@
             }
 
             logsToDisplay.forEach(log => {
-                if (log.eventType === 'FinishQuiz' || log.eventType === 'ViewLecture') {
-                    const logItem = document.createElement('div');
-                    logItem.className = 'p-3 border rounded-lg flex justify-between items-center bg-white';
-                    
-                    const date = new Date(log.timestamp);
-                    const formattedDate = date.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+                const logItem = document.createElement('div');
+                logItem.className = 'p-3 border rounded-lg flex flex-col sm:flex-row justify-between items-center bg-white gap-3';
+                const date = new Date(log.timestamp);
+                const formattedDate = date.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
 
-                    if (log.eventType === 'FinishQuiz') {
-                        logItem.innerHTML = `
-                            <div>
-                                <p class="font-bold text-slate-800">${log.title}</p>
-                                <p class="text-sm text-slate-500">${formattedDate}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold text-lg ${log.score / log.total >= 0.5 ? 'text-green-600' : 'text-red-600'}">
-                                    ${log.score} / ${log.total}
-                                </p>
-                                <p class="text-xs text-slate-500">Score</p>
-                            </div>
-                        `;
-                    } else if (log.eventType === 'ViewLecture') {
-                         logItem.innerHTML = `
-                            <div>
-                                <p class="font-bold text-slate-800">${log.title}</p>
-                                <p class="text-sm text-slate-500">${formattedDate}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold text-lg text-green-600"><i class="fas fa-video"></i></p>
-                                <p class="text-xs text-slate-500">Viewed</p>
-                            </div>
-                        `;
+                let mainContent = '';
+                if (log.eventType === 'FinishQuiz') {
+                    mainContent = `
+                        <div class="flex-grow text-center sm:text-left">
+                            <p class="font-bold text-slate-800">${log.title}</p>
+                            <p class="text-sm text-slate-500">${formattedDate}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-lg ${log.score / log.total >= 0.5 ? 'text-green-600' : 'text-red-600'}">
+                                ${log.score} / ${log.total}
+                            </p>
+                            <p class="text-xs text-slate-500">Score</p>
+                        </div>
+                    `;
+                    if (log.isReviewable) {
+                        const reviewButton = document.createElement('button');
+                        reviewButton.innerHTML = `<i class="fas fa-redo-alt mr-2"></i> Review`;
+                        reviewButton.className = 'action-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm';
+                        reviewButton.onclick = () => startFullQuizReview(log.logId, log.title);
+                        logItem.appendChild(reviewButton);
                     }
-                    activityLogList.appendChild(logItem);
+                } else if (log.eventType === 'ViewLecture') {
+                     mainContent = `
+                        <div class="flex-grow text-center sm:text-left">
+                            <p class="font-bold text-slate-800">${log.title}</p>
+                            <p class="text-sm text-slate-500">${formattedDate}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-lg text-green-600"><i class="fas fa-video"></i></p>
+                            <p class="text-xs text-slate-500">Viewed</p>
+                        </div>
+                    `;
                 }
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'flex-grow flex items-center justify-between w-full';
+                contentWrapper.innerHTML = mainContent;
+                logItem.prepend(contentWrapper);
+                activityLogList.appendChild(logItem);
             });
         }
 
@@ -1196,14 +1226,14 @@
                         {
                             label: 'Lectures',
                             data: lectureData,
-                            backgroundColor: 'rgba(20, 184, 166, 0.6)', // Teal
+                            backgroundColor: 'rgba(20, 184, 166, 0.6)',
                             borderColor: 'rgb(13, 148, 136)',
                             borderWidth: 1
                         },
                         {
                             label: 'Quizzes',
                             data: quizData,
-                            backgroundColor: 'rgba(59, 130, 246, 0.6)', // Blue
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
                             borderColor: 'rgb(37, 99, 235)',
                             borderWidth: 1
                         }
@@ -1216,14 +1246,8 @@
                         y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
                     },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Your Activity in the Last 7 Days'
-                        }
+                        legend: { display: true, position: 'top' },
+                        title: { display: true, text: 'Your Activity in the Last 7 Days' }
                     }
                 }
             });
@@ -1312,20 +1336,21 @@
             launchQuiz(mockQuestions, "Custom Mock Exam", timePerQuestion);
         }
 
-        function launchQuiz(questions, title, timePerQuestion = DEFAULT_TIME_PER_QUESTION, reviewMode = false) {
+        function launchQuiz(questions, title, timePerQuestion = DEFAULT_TIME_PER_QUESTION, reviewMode = false, pastAnswers = null) {
             isReviewMode = reviewMode;
-            showScreen(quizContainer, currentUser.Role === 'Guest');
+            showScreen(quizContainer);
             currentQuestionIndex = 0;
             score = 0;
             currentQuizQuestions = questions;
             
             if (!isReviewMode) {
-                originalQuizQuestions = [...questions]; // Save the original questions for review
+                originalQuizQuestions = [...questions];
                 userAnswers = new Array(questions.length).fill(null);
-                originalUserAnswers = userAnswers; // Link original answers
+                originalUserAnswers = userAnswers;
             } else {
-                // In review mode, we don't reset userAnswers. We use the original ones.
-                userAnswers = originalUserAnswers;
+                originalQuizQuestions = [...questions];
+                userAnswers = pastAnswers;
+                originalUserAnswers = pastAnswers;
             }
 
             flaggedIndices.clear();
@@ -1368,7 +1393,6 @@
             previousBtn.disabled = currentQuestionIndex === 0;
             previousBtn.classList.toggle('opacity-50', currentQuestionIndex === 0);
             
-            // In review mode, the "Next" button should say "Finish" on the last question.
             if (isReviewMode && currentQuestionIndex === currentQuizQuestions.length - 1) {
                 nextSkipBtn.textContent = 'Finish Review';
             } else {
@@ -1379,7 +1403,7 @@
 
             flagBtn.classList.toggle('flagged', flaggedIndices.has(currentQuestionIndex));
             
-            const answersToShow = isReviewMode ? [...currentQuestion.answerOptions] : [...currentQuestion.answerOptions].sort(() => Math.random() - 0.5);
+            const answersToShow = [...currentQuestion.answerOptions];
             
             answersToShow.forEach(answer => {
                 const buttonContainer = document.createElement('div');
@@ -1387,7 +1411,7 @@
                 button.textContent = answer.text;
                 button.className = 'answer-btn w-full text-left p-4 rounded-lg bg-slate-100 hover:bg-slate-200 border-2 border-transparent';
                 button.dataset.correct = answer.isCorrect;
-                button.dataset.text = answer.text; // Store text for comparison in review mode
+                button.dataset.text = answer.text;
                 button.addEventListener('click', (e) => selectAnswer(e, answer));
                 const rationale = document.createElement('p');
                 rationale.textContent = answer.rationale;
@@ -1446,7 +1470,7 @@
         }
 
         function selectAnswer(e, selectedAnswer) {
-            if (isReviewMode) return; // Disable selecting answers in review mode
+            if (isReviewMode) return;
 
             clearInterval(timerInterval);
             if(userAnswers[currentQuestionIndex] === null && selectedAnswer.isCorrect) {
@@ -1471,8 +1495,8 @@
                     button.classList.add('correct');
                     rationale.classList.add('bg-green-100', 'visible');
                 } else {
-                    if (isReviewMode && userAnswer && button.dataset.text === userAnswer.answer) {
-                        button.classList.add('incorrect', 'user-choice'); // Highlight user's wrong choice
+                    if (userAnswer && button.dataset.text === userAnswer.answer) {
+                        button.classList.add('incorrect', 'user-choice');
                     } else {
                          button.classList.add('incorrect');
                     }
@@ -1502,7 +1526,7 @@
                     eventType: 'FinishQuiz',
                     quizTitle: quizTitle.textContent,
                     score: score,
-                    totalQuestions: currentQuizQuestions.length
+                    totalQuestions: originalQuizQuestions.length
                 });
             }
         }
@@ -1512,7 +1536,6 @@
                 currentQuestionIndex++;
                 showQuestion();
             } else if (isReviewMode) {
-                // If it's the end of the review, go back to the results screen
                 showResults();
             }
         }
@@ -1588,7 +1611,7 @@
         
         function triggerEndQuiz() {
             if (isReviewMode) {
-                showResults();
+                showMainMenuScreen();
                 return;
             }
             showConfirmationModal('End Quiz?', 'Are you sure you want to end the quiz?', () => {
@@ -1621,7 +1644,40 @@
                 const answer = originalUserAnswers[index];
                 return answer && !answer.isCorrect;
             });
-            launchQuiz(incorrectQuestions, quizTitle.textContent.replace('Review: ', ''), undefined, true);
+            const pastAnswers = originalUserAnswers.filter(a => a && !a.isCorrect);
+            launchQuiz(incorrectQuestions, quizTitle.textContent.replace('Review: ', ''), undefined, true, pastAnswers);
+        }
+
+        async function startFullQuizReview(logId, title) {
+            showScreen(quizContainer);
+            questionContainer.classList.add('hidden');
+            controlsContainer.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            progressText.textContent = 'Loading review...';
+
+            try {
+                const response = await fetch(`${API_URL}?request=reviewQuiz&logId=${encodeURIComponent(logId)}&userId=${currentUser.UniqueID}`);
+                if (!response.ok) throw new Error('Failed to fetch review data.');
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                const reviewQuestions = data.reviewData.map(item => parseQuestions([item.question])[0]);
+                const pastAnswers = data.reviewData.map(item => {
+                    const question = parseQuestions([item.question])[0];
+                    const correctOption = question.answerOptions.find(opt => opt.isCorrect);
+                    return {
+                        answer: item.userAnswer,
+                        isCorrect: item.userAnswer === correctOption.text
+                    };
+                });
+                
+                launchQuiz(reviewQuestions, title, undefined, true, pastAnswers);
+
+            } catch (error) {
+                console.error("Error starting full quiz review:", error);
+                progressText.textContent = `Error: ${error.message}`;
+            }
         }
 
         // --- EVENT LISTENERS ---
@@ -1631,14 +1687,12 @@
         qbankBtn.addEventListener('click', showQbankScreen);
         libraryBtn.addEventListener('click', showLibraryScreen);
         
-        // Back Buttons
         lecturesBackBtn.addEventListener('click', handleBackNavigation);
         qbankBackBtn.addEventListener('click', handleBackNavigation);
         listBackBtn.addEventListener('click', handleBackNavigation);
         activityBackBtn.addEventListener('click', handleBackNavigation);
         libraryBackBtn.addEventListener('click', handleBackNavigation);
 
-        // Global Header
         globalHomeBtn.addEventListener('click', () => {
             if (currentUser && currentUser.Role === 'Guest') {
                 showScreen(loginContainer);
@@ -1650,21 +1704,17 @@
         logoutBtn.addEventListener('click', handleLogout);
         activityLogBtn.addEventListener('click', showActivityLog);
 
-        // Activity Log Filters
         logFilterAll.addEventListener('click', () => renderFilteredLog('all'));
         logFilterQuizzes.addEventListener('click', () => renderFilteredLog('quizzes'));
         logFilterLectures.addEventListener('click', () => renderFilteredLog('lectures'));
 
-        // Lectures
         lectureSearchInput.addEventListener('keyup', (e) => renderLectures(e.target.value));
 
-        // Q-Bank
         startMockBtn.addEventListener('click', handleMockExamStart);
         browseByChapterBtn.addEventListener('click', () => showChapterList('All'));
         browseBySourceBtn.addEventListener('click', showSourceList);
         toggleCustomOptionsBtn.addEventListener('click', () => customExamOptions.classList.toggle('visible'));
 
-        // Quiz
         hintBtn.addEventListener('click', () => hintText.classList.remove('hidden'));
         flagBtn.addEventListener('click', toggleFlag);
         endQuizBtn.addEventListener('click', triggerEndQuiz);
@@ -1679,9 +1729,8 @@
                 showMainMenuScreen();
             }
         });
-        reviewIncorrectBtn.addEventListener('click', startIncorrectReview); // ADDED
+        reviewIncorrectBtn.addEventListener('click', startIncorrectReview);
 
-        // Modals
         modalCancelBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
         modalConfirmBtn.addEventListener('click', () => { if (modalConfirmAction) modalConfirmAction(); });
         navigatorBtn.addEventListener('click', showQuestionNavigator);
