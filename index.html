@@ -31,6 +31,7 @@
             display: flex;
             flex-direction: column;
             min-height: calc(100vh - 2rem);
+            position: relative; /* Needed for watermark positioning */
         }
         main {
             flex-grow: 1;
@@ -113,12 +114,26 @@
             background-color: #3b82f6;
             color: white;
         }
+        /* Watermark Styles */
+        #watermark-overlay {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-2 sm:p-4">
 
     <!-- Main container for the entire app -->
     <div class="main-app-container">
+        <!-- ADDED: Watermark Overlay -->
+        <div id="watermark-overlay" class="hidden">
+            <!-- Watermark items will be injected here by JS -->
+        </div>
+
         <!-- Global header with fixed title and home button -->
         <header id="global-header" class="p-4 md:p-6 bg-slate-800 text-white flex justify-between items-center hidden">
             <a href="https://www.surgerymastersacademy.com" target="_blank" title="Back to Main Website">
@@ -197,7 +212,7 @@
                         <div id="last-quiz-ribbon" class="hidden p-3 bg-blue-100 border border-blue-200 text-blue-800 rounded-lg text-center text-sm font-medium"></div>
                     </div>
                     <p class="text-slate-500 text-center mb-8">Let’s get started – choose a section</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-6">
                         <button id="lectures-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-teal-500 to-cyan-600">
                             <i class="fas fa-video text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">Lectures</span>
@@ -208,10 +223,15 @@
                             <span class="text-2xl font-bold">Question Bank</span>
                             <span class="font-light">Test Your Knowledge</span>
                         </button>
-                        <button id="library-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-orange-500 to-amber-600 md:col-span-1">
+                        <button id="library-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-orange-500 to-amber-600">
                             <i class="fas fa-book-bookmark text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">Library</span>
                             <span class="font-light">View Resources</span>
+                        </button>
+                        <button id="leaderboard-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-rose-500 to-pink-600">
+                            <i class="fas fa-trophy text-5xl mb-4"></i>
+                            <span class="text-2xl font-bold">Leaderboard</span>
+                            <span class="font-light">Top 10 Users</span>
                         </button>
                     </div>
                 </div>
@@ -227,6 +247,22 @@
                 <div class="p-4 md:p-6">
                     <div id="library-loader" class="loader hidden"></div>
                     <div id="library-list" class="space-y-4">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Screen -->
+            <div id="leaderboard-container" class="w-full hidden">
+                <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
+                    <button id="leaderboard-back-btn" class="text-slate-700 hover:text-blue-600 transition-colors" title="Back"><i class="fas fa-arrow-left"></i> Back</button>
+                    <h2 class="text-xl md:text-2xl font-bold text-slate-800">Top 10 Champions</h2>
+                    <div class="w-16"></div> <!-- Spacer -->
+                </div>
+                <div class="p-4 md:p-6">
+                    <div id="leaderboard-loader" class="loader hidden"></div>
+                    <div id="current-user-rank" class="mb-6"></div> 
+                    <div id="leaderboard-list" class="space-y-3">
+                        <!-- Leaderboard will be injected here -->
                     </div>
                 </div>
             </div>
@@ -295,6 +331,8 @@
                             <button id="browse-by-chapter-btn" class="action-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">Browse by Chapter</button>
                             <button id="browse-by-source-btn" class="action-btn w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg">Browse by Source</button>
                         </div>
+                        <!-- ADDED: Practice Mistakes Button -->
+                        <button id="practice-mistakes-btn" class="action-btn w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg">Practice Mistakes</button>
                     </div>
                 </div>
             </div>
@@ -474,7 +512,6 @@
                 <button id="note-save-btn" class="action-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
             </div>
         </div>
-        <!-- ADDED: Clear Log Confirmation Modal -->
         <div id="clear-log-modal" class="bg-white rounded-lg p-8 shadow-xl max-w-md w-full hidden">
             <h3 class="text-xl font-bold mb-4">Clear Activity Log</h3>
             <p class="text-slate-600 mb-6">Which logs would you like to permanently delete?</p>
@@ -523,6 +560,7 @@
         const activityLogContainer = document.getElementById('activity-log-container');
         const notesContainer = document.getElementById('notes-container');
         const libraryContainer = document.getElementById('library-container');
+        const leaderboardContainer = document.getElementById('leaderboard-container');
         const loginForm = document.getElementById('login-form');
         const loginLoader = document.getElementById('login-loader');
         const loginLoadingText = document.getElementById('login-loading-text');
@@ -534,11 +572,16 @@
         const lecturesBtn = document.getElementById('lectures-btn');
         const qbankBtn = document.getElementById('qbank-btn');
         const libraryBtn = document.getElementById('library-btn');
+        const leaderboardBtn = document.getElementById('leaderboard-btn');
         const lastLectureRibbon = document.getElementById('last-lecture-ribbon');
         const lastQuizRibbon = document.getElementById('last-quiz-ribbon');
         const libraryBackBtn = document.getElementById('library-back-btn');
         const libraryLoader = document.getElementById('library-loader');
         const libraryList = document.getElementById('library-list');
+        const leaderboardBackBtn = document.getElementById('leaderboard-back-btn');
+        const leaderboardLoader = document.getElementById('leaderboard-loader');
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const currentUserRankDiv = document.getElementById('current-user-rank');
         const lecturesBackBtn = document.getElementById('lectures-back-btn');
         const lectureSearchInput = document.getElementById('lecture-search-input');
         const lecturesLoader = document.getElementById('lectures-loader');
@@ -577,6 +620,7 @@
         const mockError = document.getElementById('mock-error');
         const browseByChapterBtn = document.getElementById('browse-by-chapter-btn');
         const browseBySourceBtn = document.getElementById('browse-by-source-btn');
+        const practiceMistakesBtn = document.getElementById('practice-mistakes-btn');
         const listBackBtn = document.getElementById('list-back-btn');
         const listTitle = document.getElementById('list-title');
         const listItems = document.getElementById('list-items');
@@ -638,6 +682,7 @@
         let userAnswers = [];
         let modalConfirmAction = null;
         let isReviewMode = false;
+        let isPracticingMistakes = false;
         const DEFAULT_TIME_PER_QUESTION = 45;
         let currentQuizTimePerQuestion = DEFAULT_TIME_PER_QUESTION;
 
@@ -687,13 +732,21 @@
 
         function parseQuestions(data) {
             if (!data) return [];
-            return data.filter(row => row.Chapter && String(row.Chapter).trim() && row.Question && String(row.Question).trim()).map(row => {
+            return data.filter(row => row.Question && String(row.Question).trim()).map(row => {
                 const answerOptions = [];
                 if (row.CorrectAnswer && String(row.CorrectAnswer).trim() !== '') answerOptions.push({ text: String(row.CorrectAnswer), isCorrect: true, rationale: row.CorrectRationale || '' });
                 if (row.IncorrectAnswer1 && String(row.IncorrectAnswer1).trim() !== '') answerOptions.push({ text: String(row.IncorrectAnswer1), isCorrect: false, rationale: row.IncorrectRationale1 || '' });
                 if (row.IncorrectAnswer2 && String(row.IncorrectAnswer2).trim() !== '') answerOptions.push({ text: String(row.IncorrectAnswer2), isCorrect: false, rationale: row.IncorrectRationale2 || '' });
                 if (row.IncorrectAnswer3 && String(row.IncorrectAnswer3).trim() !== '') answerOptions.push({ text: String(row.IncorrectAnswer3), isCorrect: false, rationale: row.IncorrectRationale3 || '' });
-                return { UniqueID: row.UniqueID, chapter: row.Chapter, question: row.Question, hint: row.Hint || '', source: row.Source || '', ImageURL: row.ImageURL || '', answerOptions: answerOptions };
+                return { 
+                    UniqueID: row.UniqueID, 
+                    chapter: (row.Chapter && String(row.Chapter).trim()) ? row.Chapter : 'Uncategorized', 
+                    question: row.Question, 
+                    hint: row.Hint || '', 
+                    source: row.Source || '', 
+                    ImageURL: row.ImageURL || '', 
+                    answerOptions: answerOptions 
+                };
             });
         }
         
@@ -817,6 +870,7 @@
 
                 if (result.success) {
                     currentUser = result.user;
+                    updateWatermark(currentUser);
                     loadUserProgress();
                     await loadUserData();
                     showMainMenuScreen();
@@ -835,13 +889,15 @@
         }
         
         function showScreen(screenToShow, isGuest = false) {
-            [loginContainer, mainMenuContainer, lecturesContainer, qbankContainer, listContainer, quizContainer, activityLogContainer, notesContainer, libraryContainer].forEach(screen => {
+            [loginContainer, mainMenuContainer, lecturesContainer, qbankContainer, listContainer, quizContainer, activityLogContainer, notesContainer, libraryContainer, leaderboardContainer].forEach(screen => {
                 if(screen) screen.classList.add('hidden');
             });
             if(screenToShow) screenToShow.classList.remove('hidden');
 
-            if (screenToShow !== loginContainer) {
+            const watermarkOverlay = document.getElementById('watermark-overlay');
+            if (screenToShow !== loginContainer && !isGuest) {
                 globalHeader.classList.remove('hidden');
+                watermarkOverlay.classList.remove('hidden');
                 if (isGuest) {
                     userNameDisplay.classList.add('hidden');
                     logoutBtn.classList.add('hidden');
@@ -856,6 +912,7 @@
                 }
             } else {
                 globalHeader.classList.add('hidden');
+                watermarkOverlay.classList.add('hidden');
             }
         }
 
@@ -882,10 +939,91 @@
             renderBooks();
         }
 
+        async function showLeaderboardScreen() {
+            showScreen(leaderboardContainer);
+            navigationHistory.push(showLeaderboardScreen);
+            leaderboardList.innerHTML = '';
+            currentUserRankDiv.innerHTML = '';
+            leaderboardLoader.classList.remove('hidden');
+            try {
+                const response = await fetch(`${API_URL}?request=leaderboard&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error('Failed to fetch leaderboard data.');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                renderLeaderboard(data.leaderboard, data.currentUserRank);
+            } catch (error) {
+                console.error("Error loading leaderboard:", error);
+                leaderboardList.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+            } finally {
+                leaderboardLoader.classList.add('hidden');
+            }
+        }
+
+        function renderLeaderboard(top10, currentUserRank) {
+            leaderboardList.innerHTML = '';
+            currentUserRankDiv.innerHTML = '';
+
+            if (currentUserRank) {
+                currentUserRankDiv.innerHTML = `
+                    <div class="p-4 bg-blue-100 border-2 border-blue-300 rounded-lg">
+                        <h4 class="text-lg font-bold text-center text-blue-800">Your Rank</h4>
+                        <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 flex items-center justify-center text-xl font-bold text-blue-700">${currentUserRank.rank}</div>
+                                <p class="font-bold text-slate-800 text-lg ml-4">${currentUserRank.name} (You)</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-extrabold text-2xl text-blue-600">${currentUserRank.score}</p>
+                                <p class="text-xs text-slate-500">Total Score</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (!top10 || top10.length === 0) {
+                leaderboardList.innerHTML = `<p class="text-center text-slate-500 mt-4">The leaderboard is empty. Start a quiz to get on the board!</p>`;
+                return;
+            }
+
+            top10.forEach(user => {
+                const rank = user.rank;
+                let rankIcon = '';
+                let rankColor = 'bg-white border-slate-200';
+                if (rank === 1) {
+                    rankIcon = 'fas fa-trophy text-yellow-400';
+                    rankColor = 'bg-yellow-100 border-yellow-300';
+                } else if (rank === 2) {
+                    rankIcon = 'fas fa-medal text-gray-400';
+                    rankColor = 'bg-gray-100 border-gray-300';
+                } else if (rank === 3) {
+                    rankIcon = 'fas fa-award text-orange-400';
+                    rankColor = 'bg-orange-100 border-orange-300';
+                }
+
+                const userElement = document.createElement('div');
+                userElement.className = `flex items-center p-4 rounded-lg border-2 ${rankColor}`;
+                
+                userElement.innerHTML = `
+                    <div class="w-10 h-10 flex items-center justify-center text-xl font-bold ${rank > 3 ? 'text-slate-600' : ''}">
+                        ${rankIcon ? `<i class="${rankIcon}"></i>` : rank}
+                    </div>
+                    <div class="flex-grow ml-4">
+                        <p class="font-bold text-slate-800 text-lg">${user.name}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-slate-500">Rank ${rank}</p>
+                    </div>
+                `;
+                leaderboardList.appendChild(userElement);
+            });
+        }
+
+
         function renderBooks() {
             libraryList.innerHTML = '';
             if (mcqBooks.length === 0) {
-                libraryList.innerHTML = `<p class="text-slate-500 text-center">No books found in the library.</p>`;
+                libraryList.innerHTML = `<p class="text-center text-slate-500">No books found in the library.</p>`;
                 return;
             }
 
@@ -1355,8 +1493,9 @@
             launchQuiz(mockQuestions, "Custom Mock Exam", timePerQuestion);
         }
 
-        function launchQuiz(questions, title, timePerQuestion = DEFAULT_TIME_PER_QUESTION, reviewMode = false, pastAnswers = null) {
+        function launchQuiz(questions, title, timePerQuestion = DEFAULT_TIME_PER_QUESTION, reviewMode = false, pastAnswers = null, isMistakePractice = false) {
             isReviewMode = reviewMode;
+            isPracticingMistakes = isMistakePractice;
             showScreen(quizContainer);
             currentQuestionIndex = 0;
             score = 0;
@@ -1422,7 +1561,7 @@
 
             flagBtn.classList.toggle('flagged', flaggedIndices.has(currentQuestionIndex));
             
-            const shuffledAnswers = [...currentQuestion.answerOptions].sort(() => Math.random() - 0.5);
+            const shuffledAnswers = isReviewMode ? [...currentQuestion.answerOptions] : [...currentQuestion.answerOptions].sort(() => Math.random() - 0.5);
             
             shuffledAnswers.forEach(answer => {
                 const buttonContainer = document.createElement('div');
@@ -1495,9 +1634,19 @@
             if (isReviewMode) return;
 
             clearInterval(timerInterval);
+            const currentQuestion = currentQuizQuestions[currentQuestionIndex];
+
             if(userAnswers[currentQuestionIndex] === null && selectedAnswer.isCorrect) {
                 score++;
+                if (isPracticingMistakes) {
+                    logCorrectedMistake(currentQuestion.UniqueID);
+                }
+            } else if (userAnswers[currentQuestionIndex] === null && !selectedAnswer.isCorrect) {
+                 if (!isPracticingMistakes) {
+                    logIncorrectAnswer(currentQuestion.UniqueID, selectedAnswer.text);
+                }
             }
+            
             userAnswers[currentQuestionIndex] = { answer: selectedAnswer.text, isCorrect: selectedAnswer.isCorrect };
             showAnswerResult();
             updateScoreBar();
@@ -1894,6 +2043,76 @@
             clearLogModal.classList.add('hidden');
         }
 
+        function updateWatermark(user) {
+            const watermarkOverlay = document.getElementById('watermark-overlay');
+            if (!user || user.Role === 'Guest') {
+                watermarkOverlay.classList.add('hidden');
+                return;
+            }
+
+            watermarkOverlay.innerHTML = ''; // Clear previous watermark
+            const date = new Date().toLocaleDateString('en-GB');
+
+            const watermarkItem = document.createElement('div');
+            watermarkItem.className = 'flex flex-col items-end text-slate-900';
+            watermarkItem.innerHTML = `
+                <img src="https://raw.githubusercontent.com/doctorbishoy/Plasticology-/main/Plasticology%202025%20Logo%20white%20outline.png" alt="Logo" class="h-10 opacity-50" style="filter: invert(1);">
+                <span class="font-semibold text-xs">${user.Name}</span>
+                <span class="text-xs">${date}</span>
+            `;
+            watermarkOverlay.appendChild(watermarkItem);
+        }
+
+        async function startIncorrectQuestionsQuiz() {
+            loader.classList.remove('hidden');
+            loadingText.textContent = 'Loading your mistakes...';
+            loadingText.classList.remove('hidden');
+            try {
+                const response = await fetch(`${API_URL}?request=getIncorrectQuestions&userId=${currentUser.UniqueID}&t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error('Failed to fetch your mistakes.');
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                if (data.questions.length === 0) {
+                    showConfirmationModal('All Clear!', 'You have no incorrect questions to practice. Well done!', () => modalBackdrop.classList.add('hidden'));
+                    return;
+                }
+                
+                const shuffled = [...data.questions].sort(() => Math.random() - 0.5);
+                launchQuiz(shuffled, "Practice Mistakes", DEFAULT_TIME_PER_QUESTION, false, null, true);
+
+            } catch (error) {
+                console.error("Error starting mistake practice:", error);
+                mockError.textContent = error.message;
+                mockError.classList.remove('hidden');
+            } finally {
+                loader.classList.add('hidden');
+                loadingText.classList.add('hidden');
+            }
+        }
+
+        function logIncorrectAnswer(questionId, userAnswer) {
+            const payload = {
+                eventType: 'logIncorrectAnswer',
+                userId: currentUser.UniqueID,
+                questionId: questionId,
+                userAnswer: userAnswer
+            };
+            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+                .catch(err => console.error("Failed to log incorrect answer:", err));
+        }
+
+        function logCorrectedMistake(questionId) {
+            const payload = {
+                eventType: 'logCorrectedMistake',
+                userId: currentUser.UniqueID,
+                questionId: questionId
+            };
+            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+                .catch(err => console.error("Failed to log corrected mistake:", err));
+        }
+
 
         // --- EVENT LISTENERS ---
         loginForm.addEventListener('submit', handleLogin);
@@ -1902,6 +2121,7 @@
         qbankBtn.addEventListener('click', showQbankScreen);
         libraryBtn.addEventListener('click', showLibraryScreen);
         notesBtn.addEventListener('click', showNotesScreen);
+        leaderboardBtn.addEventListener('click', showLeaderboardScreen);
         
         lecturesBackBtn.addEventListener('click', handleBackNavigation);
         qbankBackBtn.addEventListener('click', handleBackNavigation);
@@ -1909,6 +2129,7 @@
         activityBackBtn.addEventListener('click', handleBackNavigation);
         libraryBackBtn.addEventListener('click', handleBackNavigation);
         notesBackBtn.addEventListener('click', handleBackNavigation);
+        leaderboardBackBtn.addEventListener('click', handleBackNavigation);
 
         globalHomeBtn.addEventListener('click', () => {
             if (currentUser && currentUser.Role === 'Guest') {
@@ -1934,6 +2155,7 @@
         browseByChapterBtn.addEventListener('click', () => showChapterList('All'));
         browseBySourceBtn.addEventListener('click', showSourceList);
         toggleCustomOptionsBtn.addEventListener('click', () => customExamOptions.classList.toggle('visible'));
+        practiceMistakesBtn.addEventListener('click', startIncorrectQuestionsQuiz);
 
         hintBtn.addEventListener('click', () => hintText.classList.remove('hidden'));
         flagBtn.addEventListener('click', toggleFlag);
