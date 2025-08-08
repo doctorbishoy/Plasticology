@@ -264,7 +264,7 @@
                         </button>
                         <button id="qbank-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-indigo-500 to-purple-600">
                             <i class="fas fa-question-circle text-5xl mb-4"></i>
-                            <span class="text-2xl font-bold">Q-Bank Exam Mode</span>
+                            <span class="text-2xl font-bold">Exam Mode</span>
                             <span class="font-light">Test Your Knowledge</span>
                         </button>
                         <button id="learning-mode-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600">
@@ -346,23 +346,22 @@
                     <h2 class="text-xl md:text-2xl font-bold text-slate-800">Question Bank</h2>
                     <div class="w-16"></div> <!-- Spacer -->
                 </div>
-                <div id="qbank-controls">
-                    <!-- NEW SEARCH SECTION -->
-                    <div class="p-6 md:p-8 border-b border-slate-200">
-                        <h3 class="text-xl font-bold text-slate-800 mb-4">Search for a Topic</h3>
+                <div id="qbank-controls" class="p-4 md:p-8 space-y-6">
+                    <!-- Search Card -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center"><i class="fas fa-search text-indigo-500 mr-3"></i>Search for a Topic</h3>
+                        <p class="text-slate-500 text-sm mb-4">Find questions related to a specific topic to start a quick quiz.</p>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="text" id="qbank-search-input" class="shadow appearance-none border rounded w-full py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Flaps, Burns...">
-                            <button id="qbank-search-btn" class="action-btn w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                            <input type="text" id="qbank-search-input" class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Flaps, Burns...">
+                            <button id="qbank-search-btn" class="action-btn w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
                                 Search
                             </button>
                         </div>
                         <p id="qbank-search-error" class="text-red-500 text-xs italic mt-2 hidden"></p>
-                        
-                        <!-- This section will be shown after search -->
                         <div id="qbank-search-results-container" class="mt-6 hidden">
                             <p id="qbank-search-results-info" class="text-center text-slate-600 font-semibold mb-4"></p>
                             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                <input type="number" id="qbank-search-q-count" class="shadow appearance-none border rounded w-full sm:w-1/3 py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="# of Qs (optional)">
+                                <input type="number" id="qbank-search-q-count" class="shadow-sm appearance-none border rounded w-full sm:w-1/3 py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="# of Qs (optional)">
                                 <button id="qbank-start-search-quiz-btn" class="action-btn w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">
                                     Start Quiz
                                 </button>
@@ -370,17 +369,24 @@
                         </div>
                     </div>
 
-                    <div class="p-6 md:p-8 border-b border-slate-200">
+                    <!-- Mock Exam Card -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
                         <div id="loader" class="loader hidden"></div>
                         <p id="loading-text" class="text-slate-500 mt-2 text-center hidden">Loading questions...</p>
-                        <h3 class="text-xl font-bold text-slate-800 mb-4">Create a Mock Exam</h3>
-                        <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="number" id="mock-q-count" class="shadow appearance-none border rounded w-full sm:w-1/3 py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="# of Qs" min="1">
-                            <input type="number" id="custom-timer-input" class="shadow appearance-none border rounded w-full sm:w-1/3 py-2 px-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Time/Q (sec)" min="5">
-                            <button id="toggle-custom-options-btn" class="action-btn w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
-                                Customize
-                            </button>
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center"><i class="fas fa-tasks text-emerald-500 mr-3"></i>Create a Mock Exam</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="relative">
+                                <i class="fas fa-list-ol absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="number" id="mock-q-count" class="shadow-sm appearance-none border rounded w-full py-2 pl-10 pr-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="# of Qs" min="1">
+                            </div>
+                            <div class="relative">
+                                <i class="fas fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="number" id="custom-timer-input" class="shadow-sm appearance-none border rounded w-full py-2 pl-10 pr-3 text-slate-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Time/Q (sec)" min="5">
+                            </div>
                         </div>
+                        <button id="toggle-custom-options-btn" class="action-btn w-full mt-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg">
+                            Customize (Chapters & Sources) <i class="fas fa-chevron-down ml-2 transition-transform"></i>
+                        </button>
                         <div id="custom-exam-options" class="custom-exam-options mt-4">
                              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  <div>
@@ -410,14 +416,16 @@
                         </button>
                         <p id="mock-error" class="text-red-500 text-xs italic mt-2 hidden"></p>
                     </div>
-                    <div class="p-6 md:p-8">
-                        <h3 class="text-xl font-bold text-slate-800 mb-4">Browse Questions</h3>
+
+                    <!-- Browse & Practice Card -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center"><i class="fas fa-book-open-reader text-purple-500 mr-3"></i>Browse & Practice</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <button id="browse-by-chapter-btn" class="action-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">Browse by Chapter</button>
-                            <button id="browse-by-source-btn" class="action-btn w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg">Browse by Source</button>
+                            <button id="browse-by-chapter-btn" class="action-btn w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg">Browse by Chapter</button>
+                            <button id="browse-by-source-btn" class="action-btn w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg">Browse by Source</button>
+                            <button id="practice-mistakes-btn" class="action-btn w-full bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold py-3 px-6 rounded-lg">Practice Mistakes</button>
+                            <button id="practice-bookmarked-btn" class="action-btn w-full bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-3 px-6 rounded-lg">Practice Bookmarked</button>
                         </div>
-                        <button id="practice-mistakes-btn" class="action-btn w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg">Practice Mistakes</button>
-                        <button id="practice-bookmarked-btn" class="action-btn w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg">Practice Bookmarked</button>
                     </div>
                 </div>
             </div>
@@ -2621,6 +2629,18 @@
                 loader.classList.add('hidden');
                 loadingText.classList.add('hidden');
             }
+        }
+        
+        async function startBookmarkedQuestionsQuiz() {
+            const bookmarkedIds = Array.from(appState.bookmarkedQuestions);
+            if (bookmarkedIds.length === 0) {
+                showConfirmationModal('No Bookmarks', 'You have not bookmarked any questions yet.', () => modalBackdrop.classList.add('hidden'));
+                return;
+            }
+            
+            const bookmarkedQuestions = appState.allQuestions.filter(q => bookmarkedIds.includes(q.UniqueID));
+            const shuffled = [...bookmarkedQuestions].sort(() => Math.random() - 0.5);
+            launchQuiz(shuffled, "Bookmarked Questions");
         }
 
         function logIncorrectAnswer(questionId, userAnswer) {
