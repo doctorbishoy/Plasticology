@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- URL FOR GOOGLE SHEETS ---
     // تأكد من تحديث هذا الرابط بالرابط الذي حصلت عليه بعد نشر Google Apps Script
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzx8gRgbYZw8Rrg348q2dlsRd7yQ9IXUNUPBDUf-Q5Wb9LntLuKY-ozmnbZOOuQsDU_3w/exec'; // تأكد من تحديث هذا الرابط بالرابط الصحيح بعد النشر
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxS4JqdtlcCud_OO3zlWVeCQAUwg2Al1xG3QqITq24vEI5UolL5YL_W1kfnC5soOaiFcQ/exec'; // تأكد من تحديث هذا الرابط بالرابط الصحيح بعد النشر
 
     // --- START: NEW SIMULATION SETTINGS ---
     const SIMULATION_Q_COUNT = 100; // The number of questions for the simulation
