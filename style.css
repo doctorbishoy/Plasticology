@@ -1,11 +1,46 @@
 /* Custom styles */
-body {
-    font-family: 'Cairo', 'Inter', sans-serif;
-    /* The main background is now handled by the canvas and new styles below */
-    background-color: #001f3f; /* A dark blue fallback */
+
+/* NEW: Theme Variables */
+:root {
+    --bg-color: #eef2f7;
+    --bg-gradient: linear-gradient(to top right, #e0e7ff, #f0f4f8);
+    --card-bg-color: rgba(255, 255, 255, 0.85);
+    --card-border-color: rgba(255, 255, 255, 0.4);
+    --text-color-primary: #1e293b; /* slate-800 */
+    --text-color-secondary: #64748b; /* slate-500 */
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --main-app-bg: white;
+    --question-text-color: #1e293b; /* Color for question text */
+    --answer-btn-bg: #f3f4f6; /* bg-slate-100 */
+    --answer-btn-text: #374151; /* text-gray-700 */
+    --answer-btn-hover-bg: #e5e7eb; /* hover:bg-slate-200 */
 }
 
-/* NEW: Canvas for dynamic background */
+html.dark {
+    --bg-color: #0d1a2e;
+    --bg-gradient: linear-gradient(to top right, #001f3f, #1e293b);
+    --card-bg-color: rgba(30, 41, 59, 0.85); /* slate-800 */
+    --card-border-color: rgba(71, 85, 105, 0.4); /* slate-600 */
+    --text-color-primary: #f1f5f9; /* slate-100 */
+    --text-color-secondary: #94a3b8; /* slate-400 */
+    --input-bg: #334155; /* slate-700 */
+    --input-border: #475569; /* slate-600 */
+    --main-app-bg: #1e293b; /* slate-800 */
+    --question-text-color: #f1f5f9; /* Color for question text in dark mode */
+    --answer-btn-bg: #334155; /* slate-700 */
+    --answer-btn-text: #f1f5f9; /* slate-100 */
+    --answer-btn-hover-bg: #475569; /* hover:bg-slate-600 */
+}
+
+
+body {
+    font-family: 'Cairo', 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    background-image: var(--bg-gradient);
+    transition: background-color 0.3s ease;
+}
+
 #login-canvas {
     position: fixed;
     top: 0;
@@ -13,20 +48,22 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
+    transition: opacity 0.5s ease;
 }
 
 .main-app-container {
     max-width: 800px;
     width: 100%;
     margin: 1rem auto;
-    background: white;
+    background: var(--main-app-bg);
     border-radius: 1rem;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: calc(100vh - 2rem);
-    position: relative; /* Needed for watermark positioning */
+    position: relative;
+    transition: background-color 0.3s ease;
 }
 
 main {
@@ -173,14 +210,128 @@ details[open] > summary .fa-chevron-down {
 #avatar-selection-grid img { border-radius: 50%; cursor: pointer; transition: border 0.3s; }
 #avatar-selection-grid img:hover { border: 2px solid #3b82f6; }
 
-/* --- NEW: Modern Login Page Enhancements --- */
-.login-card {
-    background-color: rgba(255, 255, 255, 0.85);
+/* --- NEW: Modern Login Page & Settings Enhancements --- */
+#settings-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    background-color: var(--card-bg-color);
+    padding: 0.5rem;
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid var(--card-border-color);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px); /* For Safari support */
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    animation: fadeIn 0.5s ease-in-out;
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
 }
+
+/* Mobile view fix for settings container */
+@media (max-width: 640px) {
+    #settings-container {
+        top: auto;
+        bottom: 1rem;
+        right: 1rem;
+        left: auto;
+    }
+}
+
+
+#settings-container button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--text-color-secondary);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+#settings-container button:hover {
+    color: var(--text-color-primary);
+    background-color: rgba(128, 128, 128, 0.1);
+}
+
+/* Corrected icon visibility */
+html.light .moon-icon { display: block; }
+html.light .sun-icon { display: none; }
+html.dark .sun-icon { display: block; }
+html.dark .moon-icon { display: none; }
+
+html:not(.animation-off) .animation-off-icon { display: block; }
+html:not(.animation-off) .animation-on-icon { display: none; }
+html.animation-off .animation-on-icon { display: block; }
+html.animation-off .animation-off-icon { display: none; }
+
+
+.login-card {
+    background-color: var(--card-bg-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--card-border-color);
+    animation: fadeIn 0.5s ease-in-out;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.login-card h1 { color: var(--text-color-primary); transition: color 0.3s ease; }
+.login-card p { color: var(--text-color-secondary); transition: color 0.3s ease; }
+.login-card .input-with-icon { 
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-color-primary);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+.login-card .input-with-icon::placeholder {
+    color: var(--text-color-secondary);
+    transition: color 0.3s ease;
+}
+
+/* Dark Mode Quiz Question Fix */
+#question-text {
+    color: var(--question-text-color);
+}
+.answer-btn {
+    background-color: var(--answer-btn-bg);
+    color: var(--answer-btn-text);
+}
+.answer-btn:hover {
+    background-color: var(--answer-btn-hover-bg);
+}
+
+/* Performance Insights Accordion */
+.insights-details {
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0; /* slate-200 */
+}
+.insights-summary {
+    padding: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    color: #334155; /* slate-700 */
+}
+.insights-summary::-webkit-details-marker {
+    display: none;
+}
+.insights-summary .fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+.insights-details[open] > .insights-summary .fa-chevron-down {
+    transform: rotate(180deg);
+}
+.insights-content {
+    padding: 0 1rem 1rem 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
