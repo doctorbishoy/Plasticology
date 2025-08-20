@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عروض Plasticology الخاصة - منظومة تعليمية متكاملة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+            scroll-behavior: smooth;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Tab Styles */
+        .main-tab-button.active {
+            background-color: #7c3aed; /* A slightly different purple for main tabs */
+            color: white;
+        }
+        .sub-tab-button.active {
+            background-color: #6d28d9;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .tab-content, .sub-tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active, .sub-tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header Section -->
+    <div class="gradient-bg text-white py-6">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-center md:text-right">
+            <div class="md:w-3/5">
+                <h1 class="text-3xl md:text-4xl font-bold mb-3">
+                    <i class="fas fa-fire text-orange-400"></i>
+                    Plasticology
+                    <i class="fas fa-graduation-cap text-yellow-300"></i>
+                </h1>
+                <p class="text-lg mb-5">منظومة تعليمية متكاملة - أول مرة في الشرق الأوسط</p>
+                <div class="bg-red-500 text-white py-2 px-6 rounded-full inline-block pulse text-base font-bold">
+                    <i class="fas fa-clock mr-2"></i>
+                    عروض لفترة محدودة
+                </div>
+            </div>
+            <div class="mt-6 md:mt-0">
+                <img src="https://raw.githubusercontent.com/doctorbishoy/Plasticology/dade7aaae57cead68a13f4dd8439bcc3e17011d5/Plasticology%202025%20Logo%20white%20outline.png" alt="Plasticology Logo" class="mx-auto w-40 h-auto" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Section (Features + Pricing) -->
+    <div id="main-content" class="py-16">
+        <div class="container mx-auto px-4">
+            <!-- What Makes Us Different -->
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-star text-yellow-500 mr-3"></i>
+                    إيه اللي بيميز Plasticology؟
+                </h2>
+                <p class="text-xl text-gray-600">مش مجرد كورس... دي ثورة تعليمية هتغير مستقبلك!</p>
+                <div class="w-32 h-1.5 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded mt-4"></div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8 mb-12">
+                <div class="text-center p-8 bg-white shadow-md rounded-xl card-hover">
+                    <div class="bg-gradient-to-br from-blue-400 to-indigo-500 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <i class="fas fa-sync-alt text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">تحديث يومي</h3>
+                    <p class="text-gray-600">كل المحتوى بيتم تحديثه يومياً عشان تفضل دايماً متابع أحدث المعلومات</p>
+                    <button onclick="openFeatureModal('daily_updates')" class="mt-4 text-blue-600 font-bold hover:underline">اعرف أكثر <i class="fas fa-arrow-left mr-2"></i></button>
+                </div>
+                
+                <div class="text-center p-8 bg-white shadow-md rounded-xl card-hover">
+                     <div class="bg-gradient-to-br from-green-400 to-emerald-500 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <i class="fas fa-brain text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">منصة متكاملة</h3>
+                    <p class="text-gray-600">من أول الفهم العميق لحد التطبيق العملي والتفوق في الامتحانات</p>
+                    <button onclick="openFeatureModal('integrated_platform')" class="mt-4 text-green-600 font-bold hover:underline">اعرف أكثر <i class="fas fa-arrow-left mr-2"></i></button>
+                </div>
+                
+                <div class="text-center p-8 bg-white shadow-md rounded-xl card-hover">
+                    <div class="bg-gradient-to-br from-purple-400 to-violet-500 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <i class="fas fa-tools text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">أدوات ذكية</h3>
+                    <p class="text-gray-600">بنك أسئلة ومنظم مذاكرة ذكي لتجربة تعليمية فريدة</p>
+                    <button onclick="openFeatureModal('smart_tools')" class="mt-4 text-purple-600 font-bold hover:underline">اعرف أكثر <i class="fas fa-arrow-left mr-2"></i></button>
+                </div>
+            </div>
+
+            <div class="text-center mt-12 mb-16">
+                <button onclick="openVideoModal()" class="bg-transparent border-2 border-purple-600 text-purple-600 font-bold py-3 px-8 rounded-full hover:bg-purple-600 hover:text-white transition-all duration-300 text-lg">
+                    <i class="fas fa-play-circle mr-2"></i>
+                    شاهد المنصة بالفيديو
+                </button>
+            </div>
+
+            <!-- Pricing Section -->
+            <div id="pricing">
+                <div class="text-center mb-12">
+                    <h2 class="text-5xl font-extrabold text-gray-800 mb-4">
+                        اختر الباقة المناسبة لك
+                    </h2>
+                    <p class="text-xl text-gray-600 mb-8">كل الباقات تشمل تحديثات مستمرة ودعم فني كامل</p>
+                    
+                    <!-- Main Tabs -->
+                    <div class="flex justify-center gap-4 bg-gray-200 p-2 rounded-full max-w-2xl mx-auto mb-8">
+                        <button class="main-tab-button flex-1 px-6 py-3 text-lg font-bold rounded-full transition-colors active" onclick="showMainTab('individuals')">
+                            <i class="fas fa-user mr-2"></i>Individuals <span class="hidden sm:inline">(باقات الأفراد)</span>
+                        </button>
+                        <button class="main-tab-button flex-1 px-6 py-3 text-lg font-bold rounded-full transition-colors" onclick="showMainTab('groups')">
+                            <i class="fas fa-users mr-2"></i>Champions <span class="hidden sm:inline">(باقات الأبطال)</span>
+                        </button>
+                    </div>
+
+                    <!-- Individuals Tab Content -->
+                    <div id="individuals" class="tab-content active">
+                        <div id="pricing-tabs" class="flex flex-col sm:flex-row justify-center gap-3 bg-gray-200 p-2 rounded-full max-w-4xl mx-auto">
+                            <button class="sub-tab-button flex-1 px-4 py-3 text-base font-bold rounded-full transition-colors active" onclick="showSubTab('lectures', this)">
+                                Lectures Bundles <span class="block text-sm opacity-75 font-normal">عروض الشرح</span>
+                            </button>
+                            <button class="sub-tab-button flex-1 px-4 py-3 text-base font-bold rounded-full transition-colors" onclick="showSubTab('mcq', this)">
+                                QBank Bundles <span class="block text-sm opacity-75 font-normal">بنك الأسئلة</span>
+                            </button>
+                            <button class="sub-tab-button flex-1 px-4 py-3 text-base font-bold rounded-full transition-colors" onclick="showSubTab('combo', this)">
+                                Combo Bundles <span class="block text-sm opacity-75 font-normal">الباقات الكومبو</span>
+                            </button>
+                        </div>
+                        <div class="mt-8">
+                            <!-- Sub Tab Content: Lectures -->
+                            <div id="lectures-content" class="sub-tab-content active">
+                                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-green-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">3 شهور (المنهج كامل)</h3>
+                                        <p class="text-3xl font-extrabold text-green-600 mb-1">25,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <p class="text-gray-500 line-through mb-2 text-sm">30,000 ج.م</p>
+                                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">وفر 5,000 ج.م</span>
+                                        <div class="text-right text-sm text-gray-600 mt-auto pt-4 mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-purple-500 text-center relative flex flex-col h-full transform lg:scale-105">
+                                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold pulse">الأكثر شيوعًا</div>
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3 mt-3">6 شهور (المنهج كامل)</h3>
+                                        <p class="text-3xl font-extrabold text-purple-600 mb-1">45,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <p class="text-gray-500 line-through mb-2 text-sm">60,000 ج.م</p>
+                                        <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full">وفر 15,000 ج.م</span>
+                                        <div class="text-right text-sm text-gray-600 mt-auto pt-4 mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-gray-800 text-white rounded-xl shadow-2xl p-6 card-hover border-t-8 border-yellow-400 text-center relative flex flex-col h-full">
+                                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">الأكثر توفيراً</div>
+                                        <h3 class="text-xl font-bold mb-3 mt-3">12 شهر (المنهج كامل)</h3>
+                                        <p class="text-3xl font-extrabold text-yellow-400 mb-1">75,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <p class="text-gray-400 line-through mb-2 text-sm">120,000 ج.م</p>
+                                        <span class="bg-yellow-200 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-full">وفر 45,000 ج.م</span>
+                                        <div class="text-right text-sm mt-auto pt-4 mb-4"><p><i class="fas fa-check-circle text-green-400 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-yellow-500 text-white py-3 rounded-lg font-bold hover:bg-yellow-600 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-blue-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">شهر واحد (المنهج كامل)</h3>
+                                        <p class="text-3xl font-extrabold text-blue-600 mb-4">10,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <div class="text-right text-sm text-gray-600 mt-auto mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-teal-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">شهر (باب واحد Custom)</h3>
+                                        <p class="text-3xl font-extrabold text-teal-600 mb-4">4,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <div class="text-right text-sm text-gray-600 mt-auto mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-teal-600 text-white py-3 rounded-lg font-bold hover:bg-teal-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-pink-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">شهر (بابين Custom)</h3>
+                                        <p class="text-3xl font-extrabold text-pink-600 mb-4">7,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <div class="text-right text-sm text-gray-600 mt-auto mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-pink-600 text-white py-3 rounded-lg font-bold hover:bg-pink-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Sub Tab Content: MCQ -->
+                            <div id="mcq-content" class="sub-tab-content">
+                                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-indigo-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">شهر واحد</h3>
+                                        <p class="text-3xl font-extrabold text-indigo-600 mb-4">1,000<span class="text-base font-medium"> ج.م</span></p>
+                                        <div class="text-right text-sm text-gray-600 mt-auto mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-teal-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">3 شهور</h3>
+                                        <p class="text-3xl font-extrabold text-teal-600 mb-4">2,500<span class="text-base font-medium"> ج.م</span></p>
+                                        <div class="text-right text-sm text-gray-600 mt-auto mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-teal-600 text-white py-3 rounded-lg font-bold hover:bg-teal-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-pink-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">6 شهور</h3>
+                                        <p class="text-3xl font-extrabold text-pink-600 mb-1">4,500<span class="text-base font-medium"> ج.م</span></p>
+                                        <p class="text-gray-500 line-through mb-2 text-sm">6,000 ج.م</p>
+                                        <span class="bg-pink-100 text-pink-800 text-xs font-semibold px-3 py-1 rounded-full">وفر 1,500 ج.م</span>
+                                        <div class="text-right text-sm text-gray-600 mt-auto pt-4 mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-pink-600 text-white py-3 rounded-lg font-bold hover:bg-pink-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-orange-500 text-center flex flex-col h-full">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">12 شهر</h3>
+                                        <p class="text-3xl font-extrabold text-orange-600 mb-1">8,000<span class="text-base font-medium"> ج.м</span></p>
+                                        <p class="text-gray-500 line-through mb-2 text-sm">12,000 ج.م</p>
+                                        <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-3 py-1 rounded-full">وفر 4,000 ج.م</span>
+                                        <div class="text-right text-sm text-gray-600 mt-auto pt-4 mb-4"><p><i class="fas fa-check-circle text-green-500 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700 transition-colors mt-auto">اشترك الآن</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Sub Tab Content: Combo -->
+                            <div id="combo-content" class="sub-tab-content">
+                                <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                                    <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-2xl p-8 text-white card-hover text-center flex flex-col h-full">
+                                        <h3 class="text-2xl font-bold mb-4">باقة 3 شهور</h3>
+                                        <p class="text-5xl font-extrabold mb-2">30,000<span class="text-xl font-medium"> ج.م</span></p>
+                                        <p class="text-lg opacity-75 line-through mb-4">بدلاً من 35,000 ج.م</p>
+                                        <span class="bg-yellow-400 text-gray-800 px-4 py-2 rounded-full text-sm font-bold inline-block mb-6">وفر 5,000 ج.م</span>
+                                        <div class="text-center text-base mt-auto mb-4"><p><i class="fas fa-check-circle text-yellow-300 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-white text-blue-600 py-4 rounded-lg font-bold hover:bg-gray-100 transition-colors text-lg mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl shadow-2xl p-8 text-white card-hover text-center relative transform lg:scale-110 flex flex-col h-full">
+                                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-gray-800 px-6 py-2 rounded-full text-base font-bold pulse">الأكثر شعبية</div>
+                                        <h3 class="text-2xl font-bold mb-4 mt-6">باقة 6 شهور</h3>
+                                        <p class="text-5xl font-extrabold mb-2">55,000<span class="text-xl font-medium"> ج.م</span></p>
+                                        <p class="text-lg opacity-75 line-through mb-4">بدلاً من 70,000 ج.م</p>
+                                        <span class="bg-yellow-400 text-gray-800 px-4 py-2 rounded-full text-sm font-bold inline-block mb-6">وفر 15,000 ج.م</span>
+                                        <div class="text-center text-base mt-auto mb-4"><p><i class="fas fa-check-circle text-yellow-300 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-white text-purple-600 py-4 rounded-lg font-bold hover:bg-gray-100 transition-colors text-lg mt-auto">اشترك الآن</a>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-yellow-500 to-red-600 rounded-2xl shadow-2xl p-8 text-white card-hover text-center flex flex-col h-full">
+                                        <h3 class="text-2xl font-bold mb-4">باقة 12 شهر</h3>
+                                        <p class="text-5xl font-extrabold mb-2">90,000<span class="text-xl font-medium"> ج.م</span></p>
+                                        <p class="text-lg opacity-75 line-through mb-4">بدلاً من 130,000 ج.م</p>
+                                        <span class="bg-white text-red-600 px-4 py-2 rounded-full text-sm font-bold inline-block mb-6">وفر 40,000 ج.م</span>
+                                        <div class="text-center text-base mt-auto mb-4"><p><i class="fas fa-check-circle text-yellow-300 mr-2"></i>تشمل منظم المذاكرة الذكي</p></div>
+                                        <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-white text-red-600 py-4 rounded-lg font-bold hover:bg-gray-100 transition-colors text-lg mt-auto">اشترك الآن</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Groups Tab Content -->
+                    <div id="groups" class="tab-content">
+                        <div class="mb-12">
+                            <h3 class="text-3xl font-bold text-center text-gray-800 mb-6">خصومات باقة الشرح الكامل</h3>
+                            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                                <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-cyan-500 text-center">
+                                    <i class="fas fa-user-friends text-5xl text-cyan-500 mb-4"></i>
+                                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Partners Bundle <span class="block text-lg font-normal">(باقة الرفقاء)</span></h4>
+                                    <p class="text-3xl font-extrabold text-cyan-600 mb-4">خصم 15%</p>
+                                    <div class="text-right space-y-2 border-t pt-4"><p><b>3 شهور:</b> <span class="font-bold text-green-600">21,250 ج.م</span> <span class="line-through text-gray-500 text-sm">25,000</span> / للفرد</p><p><b>6 شهور:</b> <span class="font-bold text-green-600">38,250 ج.م</span> <span class="line-through text-gray-500 text-sm">45,000</span> / للفرد</p><p><b>12 شهر:</b> <span class="font-bold text-green-600">63,750 ج.م</span> <span class="line-through text-gray-500 text-sm">75,000</span> / للفرد</p></div>
+                                    <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-cyan-600 text-white py-3 rounded-lg font-bold hover:bg-cyan-700 transition-colors mt-6">تواصل معنا</a>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-emerald-500 text-center">
+                                    <i class="fas fa-users text-5xl text-emerald-500 mb-4"></i>
+                                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Alliance Bundle <span class="block text-lg font-normal">(باقة التحالف)</span></h4>
+                                    <p class="text-3xl font-extrabold text-emerald-600 mb-4">خصم 25%</p>
+                                    <div class="text-right space-y-2 border-t pt-4"><p><b>3 شهور:</b> <span class="font-bold text-green-600">18,750 ج.م</span> <span class="line-through text-gray-500 text-sm">25,000</span> / للفرد</p><p><b>6 شهور:</b> <span class="font-bold text-green-600">33,750 ج.م</span> <span class="line-through text-gray-500 text-sm">45,000</span> / للفرد</p><p><b>12 شهر:</b> <span class="font-bold text-green-600">56,250 ج.م</span> <span class="line-through text-gray-500 text-sm">75,000</span> / للفرد</p></div>
+                                    <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition-colors mt-6">تواصل معنا</a>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-amber-500 text-center">
+                                    <i class="fas fa-users-crown text-5xl text-amber-500 mb-4"></i>
+                                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Legends Bundle <span class="block text-lg font-normal">(باقة الأساطير)</span></h4>
+                                    <p class="text-3xl font-extrabold text-amber-600 mb-4">خصم 35%</p>
+                                    <div class="text-right space-y-2 border-t pt-4"><p><b>3 شهور:</b> <span class="font-bold text-green-600">16,250 ج.م</span> <span class="line-through text-gray-500 text-sm">25,000</span> / للفرد</p><p><b>6 شهور:</b> <span class="font-bold text-green-600">29,250 ج.م</span> <span class="line-through text-gray-500 text-sm">45,000</span> / للفرد</p><p><b>12 شهر:</b> <span class="font-bold text-green-600">48,750 ج.م</span> <span class="line-through text-gray-500 text-sm">75,000</span> / للفرد</p></div>
+                                    <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-amber-600 text-white py-3 rounded-lg font-bold hover:bg-amber-700 transition-colors mt-6">تواصل معنا</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-center text-gray-800 mb-6 mt-16">خصومات باقات الكومبو</h3>
+                            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                                <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-cyan-500 text-center">
+                                    <i class="fas fa-user-friends text-5xl text-cyan-500 mb-4"></i>
+                                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Partners Bundle <span class="block text-lg font-normal">(باقة الرفقاء)</span></h4>
+                                    <p class="text-3xl font-extrabold text-cyan-600 mb-4">خصم 10%</p>
+                                    <div class="text-right space-y-2 border-t pt-4"><p><b>3 شهور:</b> <span class="font-bold text-green-600">27,000 ج.م</span> <span class="line-through text-gray-500 text-sm">30,000</span> / للفرد</p><p><b>6 شهور:</b> <span class="font-bold text-green-600">49,500 ج.م</span> <span class="line-through text-gray-500 text-sm">55,000</span> / للفرد</p><p><b>12 شهر:</b> <span class="font-bold text-green-600">81,000 ج.م</span> <span class="line-through text-gray-500 text-sm">90,000</span> / للفرد</p></div>
+                                    <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-cyan-600 text-white py-3 rounded-lg font-bold hover:bg-cyan-700 transition-colors mt-6">تواصل معنا</a>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-emerald-500 text-center">
+                                    <i class="fas fa-users text-5xl text-emerald-500 mb-4"></i>
+                                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Alliance Bundle <span class="block text-lg font-normal">(باقة التحالف)</span></h4>
+                                    <p class="text-3xl font-extrabold text-emerald-600 mb-4">خصم 20%</p>
+                                    <div class="text-right space-y-2 border-t pt-4"><p><b>3 شهور:</b> <span class="font-bold text-green-600">24,000 ج.م</span> <span class="line-through text-gray-500 text-sm">30,000</span> / للفرد</p><p><b>6 شهور:</b> <span class="font-bold text-green-600">44,000 ج.م</span> <span class="line-through text-gray-500 text-sm">55,000</span> / للفرد</p><p><b>12 شهر:</b> <span class="font-bold text-green-600">72,000 ج.م</span> <span class="line-through text-gray-500 text-sm">90,000</span> / للفرد</p></div>
+                                    <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition-colors mt-6">تواصل معنا</a>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-lg p-6 card-hover border-t-8 border-amber-500 text-center">
+                                    <i class="fas fa-users-crown text-5xl text-amber-500 mb-4"></i>
+                                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Legends Bundle <span class="block text-lg font-normal">(باقة الأساطير)</span></h4>
+                                    <p class="text-3xl font-extrabold text-amber-600 mb-4">خصم 30%</p>
+                                    <div class="text-right space-y-2 border-t pt-4"><p><b>3 شهور:</b> <span class="font-bold text-green-600">21,000 ج.م</span> <span class="line-through text-gray-500 text-sm">30,000</span> / للفرد</p><p><b>6 شهور:</b> <span class="font-bold text-green-600">38,500 ج.م</span> <span class="line-through text-gray-500 text-sm">55,000</span> / للفرد</p><p><b>12 شهر:</b> <span class="font-bold text-green-600">63,000 ج.م</span> <span class="line-through text-gray-500 text-sm">90,000</span> / للفرد</p></div>
+                                    <a href="https://t.me/DrBishoyAcademy" target="_blank" class="w-full block bg-amber-600 text-white py-3 rounded-lg font-bold hover:bg-amber-700 transition-colors mt-6">تواصل معنا</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-20">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                © 2024 Plasticology. جميع الحقوق محفوظة.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Feature Details Modal -->
+    <div id="featureModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden modal-overlay" onclick="closeFeatureModal()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-8 modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <h3 id="modalTitle" class="text-3xl font-bold text-gray-800"></h3>
+                <button onclick="closeFeatureModal()" class="text-gray-500 hover:text-red-500 text-3xl">&times;</button>
+            </div>
+            <div id="modalContent" class="grid md:grid-cols-2 gap-6"></div>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden modal-overlay" onclick="closeVideoModal()">
+        <div class="bg-black w-full max-w-4xl aspect-video relative modal-content" onclick="event.stopPropagation()">
+            <button onclick="closeVideoModal()" class="absolute -top-10 right-0 text-white text-4xl">&times;</button>
+            <iframe id="youtube-player" class="w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        // --- Tab Functionality ---
+        function showMainTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.main-tab-button').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function showSubTab(tabId, button) {
+            const parent = button.closest('.tab-content');
+            parent.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+            parent.querySelector(`#${tabId}-content`).classList.add('active');
+            parent.querySelectorAll('.sub-tab-button').forEach(el => el.classList.remove('active'));
+            button.classList.add('active');
+        }
+
+        // --- Feature Modal Functionality ---
+        const featureDetails = {
+            daily_updates: { title: "محتوى متجدد يوميًا", features: [ { icon: "fas fa-sync-alt", title: "تحديثات مستمرة", text: "المحاضرات وبنك الأسئلة يتم تحديثها يوميًا بأحدث المعلومات الطبية." }, { icon: "fas fa-chart-line", title: "مواكبة التطورات", text: "تضمن أنك تذاكر دائمًا من أحدث المصادر المعتمدة عالميًا." }, { icon: "fas fa-book", title: "تحسينات دورية", text: "نضيف شروحات وأسئلة جديدة باستمرار بناءً على ملاحظاتكم." } ] },
+            integrated_platform: { title: "منصة تعليمية متكاملة", features: [ { icon: "fas fa-list-ul", title: "محاضرات منظمة", text: "مقسمة بوضوح حسب الشباتر بنظام \"أكورديون\" سهل التصفح." }, { icon: "fas fa-search", title: "بحث سريع وذكي", text: "تصل لأي محاضرة أو معلومة تحتاجها في ثوانٍ معدودة." }, { icon: "fas fa-check-square", title: "تتبع التقدم", text: "علّم على المحاضرات المكتملة وتابع تقدمك بشكل مرئي." }, { icon: "fas fa-history", title: "سجل النشاط", text: "تذكرك بآخر محاضرة شاهدتها أو امتحان قمت بحله." } ] },
+            smart_tools: { title: "أدوات ذكية للتفوق", features: [ { icon: "fas fa-pencil-alt", title: "وضع الاختبار (Exam Mode)", text: "أنشئ اختبارات مخصصة أو خض تجربة محاكاة كاملة للامتحان." }, { icon: "fas fa-calendar-alt", title: "منظم المذاكرة الذكي", text: "يضع لك خطة دراسية يومية مع اختبارات مراجعة تلقائية." }, { icon: "fas fa-diagnoses", title: "بنك الحالات الإكلينيكية (OSCE)", text: "تدرب على سيناريوهات وحالات عملية واقعية." }, { icon: "fas fa-redo", title: "مراجعة الأخطاء", text: "ميزة ذكية تجمع كل الأسئلة التي أخطأت فيها سابقًا في اختبار واحد." } ] }
+        };
+
+        const modal = document.getElementById('featureModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        
+        function openFeatureModal(featureKey) {
+            const data = featureDetails[featureKey];
+            modalTitle.innerText = data.title;
+            modalContent.innerHTML = '';
+            data.features.forEach(feature => {
+                modalContent.innerHTML += `<div class="bg-gray-100 p-6 rounded-xl flex items-start space-x-4 space-x-reverse"><i class="${feature.icon} text-3xl text-purple-600 mt-1"></i><div><h4 class="font-bold text-lg text-gray-800 mb-1">${feature.title}</h4><p class="text-gray-600">${feature.text}</p></div></div>`;
+            });
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFeatureModal() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // --- Video Modal Functionality ---
+        const videoModal = document.getElementById('videoModal');
+        const player = document.getElementById('youtube-player');
+        const videoId = "AJH8-imQxJA";
+
+        function openVideoModal() {
+            player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            videoModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVideoModal() {
+            player.src = "";
+            videoModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+</body>
+</html>
