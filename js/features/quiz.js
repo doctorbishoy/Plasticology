@@ -1,4 +1,4 @@
-// js/features/quiz.js (FINAL VERSION - With Browse Functionality Added)
+// js/features/quiz.js (FINAL VERSION - With Hierarchical Browse by Source)
 
 import { appState, DEFAULT_TIME_PER_QUESTION, SIMULATION_Q_COUNT, SIMULATION_TOTAL_TIME_MINUTES, API_URL } from '../state.js';
 import * as dom from '../dom.js';
@@ -8,6 +8,79 @@ import { formatTime, parseQuestions } from '../utils.js';
 import { showMainMenuScreen, openNoteModal } from '../main.js';
 import { populateFilterOptions } from '../ui.js';
 import { saveUserProgress } from './lectures.js';
+
+// --- HELPER FUNCTIONS ---
+
+/**
+ * Gets the base pool of questions based on the global scope filter.
+ * @returns {Array} An array of question objects.
+ */
+function getQuestionPool() {
+    const isUnansweredOnly = document.getElementById('scope-unanswered').checked;
+    if (isUnansweredOnly) {
+        return appState.allQuestions.filter(q => !appState.answeredQuestions.has(q.UniqueID));
+    }
+    return appState.allQuestions;
+}
+
+/**
+ * NEW: Shows the second level of browsing: chapters within a specific source.
+ * @param {string} sourceName The name of the source selected by the user.
+ */
+function showChaptersForSource(sourceName) {
+    const questionPool = getQuestionPool();
+    const sourceSpecificQuestions = questionPool.filter(q => (q.source || 'Uncategorized') === sourceName);
+
+    dom.listTitle.textContent = `Source: ${sourceName}`;
+    dom.listItems.innerHTML = ''; // Clear the list of sources
+
+    // Create a main button to start a quiz with ALL questions from this source
+    const allButton = document.createElement('button');
+    allButton.className = 'action-btn p-4 bg-blue-600 text-white rounded-lg shadow-md text-center hover:bg-blue-700 col-span-full';
+    allButton.innerHTML = `
+        <h3 class="font-bold text-lg">Start Quiz for All of ${sourceName}</h3>
+        <p class="text-sm font-light">${sourceSpecificQuestions.length} Questions</p>
+    `;
+    allButton.addEventListener('click', () => {
+        launchQuiz(sourceSpecificQuestions, sourceName);
+    });
+    dom.listItems.appendChild(allButton);
+
+    // Get unique chapters within this source's questions
+    const chapterCounts = sourceSpecificQuestions.reduce((acc, q) => {
+        const chapter = q.chapter || 'Uncategorized';
+        acc[chapter] = (acc[chapter] || 0) + 1;
+        return acc;
+    }, {});
+
+    const chapters = Object.keys(chapterCounts).sort();
+
+    if (chapters.length > 0) {
+        // Add a separator
+        const separator = document.createElement('div');
+        separator.className = 'col-span-full border-t my-4';
+        separator.innerHTML = `<p class="text-center text-slate-500 bg-slate-50 -mt-3 mx-auto w-48">Or Choose a Chapter</p>`;
+        dom.listItems.appendChild(separator);
+
+        chapters.forEach(chapter => {
+            const button = document.createElement('button');
+            button.className = 'action-btn p-4 bg-white rounded-lg shadow-sm text-center hover:bg-slate-50';
+            button.innerHTML = `
+                <h3 class="font-bold text-slate-800">${chapter}</h3>
+                <p class="text-sm text-slate-500">${chapterCounts[chapter]} Questions</p>
+            `;
+            button.addEventListener('click', () => {
+                const chapterAndSourceQuestions = sourceSpecificQuestions.filter(q => (q.chapter || 'Uncategorized') === chapter);
+                launchQuiz(chapterAndSourceQuestions, `${sourceName} - ${chapter}`);
+            });
+            dom.listItems.appendChild(button);
+        });
+    }
+
+    // We don't push to navigation history here, as the back button should go back to the source list.
+    // The previous history entry is already the source list screen.
+}
+
 
 // --- IN-QUIZ BUTTON FUNCTIONS ---
 
@@ -191,8 +264,15 @@ function showQuestion() {
 function selectAnswer(e, selectedAnswer) {
     const currentQuestionIndex = appState.currentQuiz.currentQuestionIndex;
 
+    if (appState.currentQuiz.userAnswers[currentQuestionIndex] !== null && !appState.currentQuiz.isSimulationMode) {
+        return;
+    }
+
+    const currentQuestion = appState.currentQuiz.questions[currentQuestionIndex];
+    const isCorrect = selectedAnswer.isCorrect;
+    appState.currentQuiz.userAnswers[currentQuestionIndex] = { answer: selectedAnswer.text, isCorrect: isCorrect };
+
     if (appState.currentQuiz.isSimulationMode) {
-        appState.currentQuiz.userAnswers[currentQuestionIndex] = { answer: selectedAnswer.text, isCorrect: selectedAnswer.isCorrect };
         dom.answerButtons.querySelectorAll('button').forEach(btn => {
             btn.classList.remove('bg-blue-200', 'border-blue-400');
         });
@@ -200,24 +280,23 @@ function selectAnswer(e, selectedAnswer) {
         return;
     }
 
-    if (appState.currentQuiz.userAnswers[currentQuestionIndex] !== null) return;
     clearInterval(appState.currentQuiz.timerInterval);
-    const currentQuestion = appState.currentQuiz.questions[currentQuestionIndex];
-    const isCorrect = selectedAnswer.isCorrect;
-    appState.currentQuiz.userAnswers[currentQuestionIndex] = { answer: selectedAnswer.text, isCorrect: isCorrect };
 
     if (isCorrect) {
         appState.currentQuiz.score++;
         if (appState.currentQuiz.isPracticingMistakes) {
             logCorrectedMistake(currentQuestion.UniqueID);
         }
-    } else if (!appState.currentQuiz.isPracticingMistakes) {
-        logIncorrectAnswer(currentQuestion.UniqueID, selectedAnswer.text);
+    } else {
+        if (!appState.currentQuiz.isPracticingMistakes) {
+            logIncorrectAnswer(currentQuestion.UniqueID, selectedAnswer.text);
+        }
     }
     
     showAnswerResult();
     updateScoreBar();
 }
+
 
 function showResults() {
     clearInterval(appState.currentQuiz.timerInterval);
@@ -227,8 +306,12 @@ function showResults() {
     dom.controlsContainer.classList.add('hidden');
     dom.resultsContainer.classList.remove('hidden');
 
+    const totalQuestions = appState.currentQuiz.originalQuestions.length;
+    const attemptedQuestions = appState.currentQuiz.originalUserAnswers.filter(a => a !== null).length;
+
     dom.resultsTitle.textContent = appState.currentQuiz.isSimulationMode ? "Simulation Complete!" : "Quiz Complete!";
-    dom.resultsScoreText.innerHTML = `Your score is <span class="font-bold">${appState.currentQuiz.score}</span> out of <span class="font-bold">${appState.currentQuiz.originalQuestions.length}</span>.`;
+    
+    dom.resultsScoreText.innerHTML = `Your score is <span class="font-bold">${appState.currentQuiz.score}</span> out of <span class="font-bold">${totalQuestions}</span>.`;
 
     const incorrectCount = appState.currentQuiz.originalUserAnswers.filter(a => a && !a.isCorrect).length;
     dom.reviewIncorrectBtn.classList.toggle('hidden', incorrectCount === 0);
@@ -239,16 +322,21 @@ function showResults() {
             eventType: 'FinishQuiz',
             quizTitle: dom.quizTitle.textContent,
             score: appState.currentQuiz.score,
-            totalQuestions: appState.currentQuiz.originalQuestions.length
+            totalQuestions: totalQuestions,
+            attemptedQuestions: attemptedQuestions,
         });
+
         if (appState.currentQuiz.isSimulationMode) {
             appState.currentQuiz.originalQuestions.forEach((q, index) => {
                 const answer = appState.currentQuiz.originalUserAnswers[index];
-                if (answer && !answer.isCorrect) logIncorrectAnswer(q.UniqueID, answer.answer);
+                if (answer && !answer.isCorrect) {
+                    logIncorrectAnswer(q.UniqueID, answer.answer);
+                }
             });
         }
     }
 }
+
 
 export function handleNextQuestion() {
     if (appState.currentQuiz.currentQuestionIndex < appState.currentQuiz.questions.length - 1) {
@@ -350,15 +438,18 @@ export function handleMockExamStart() {
         return;
     }
     const customTime = parseInt(dom.customTimerInput.value, 10);
+    
+    let questionPool = getQuestionPool();
+
     const selectedChapters = [...dom.chapterSelectMock.querySelectorAll('input:checked')].map(el => el.value);
     const selectedSources = [...dom.sourceSelectMock.querySelectorAll('input:checked')].map(el => el.value);
 
-    let filteredQuestions = appState.allQuestions;
+    let filteredQuestions = questionPool;
     if (selectedChapters.length > 0) filteredQuestions = filteredQuestions.filter(q => selectedChapters.includes(q.chapter));
     if (selectedSources.length > 0) filteredQuestions = filteredQuestions.filter(q => selectedSources.includes(q.source));
 
     if (filteredQuestions.length === 0 || requestedCount > filteredQuestions.length) {
-        dom.mockError.textContent = `Only ${filteredQuestions.length} questions available for this filter. Please broaden your criteria.`;
+        dom.mockError.textContent = `Only ${filteredQuestions.length} questions available for your combined filters. Please broaden your criteria.`;
         dom.mockError.classList.remove('hidden');
         return;
     }
@@ -407,44 +498,39 @@ export function handleQBankSearch() {
         dom.qbankSearchError.classList.remove('hidden');
         return;
     }
+    
+    const questionPool = getQuestionPool();
 
-    // --- MODIFIED: Expanded Search Logic ---
-    const results = appState.allQuestions.filter(q => {
+    const results = questionPool.filter(q => {
         const questionText = q.question.toLowerCase();
-        
-        // Combine all answer texts into a single string for searching
         const answersText = q.answerOptions
             .map(opt => opt.text.toLowerCase())
-            .join(' '); // Join with a space
-
-        // Return true if the search term is in the question OR in any of the answers
+            .join(' '); 
         return questionText.includes(searchTerm) || answersText.includes(searchTerm);
     });
 
     appState.qbankSearchResults = results;
+    
+    dom.qbankMainContent.classList.add('hidden');
 
-    // --- MODIFIED: Detailed Results Display ---
     if (results.length === 0) {
         dom.qbankSearchError.textContent = `No questions found for "${dom.qbankSearchInput.value}".`;
         dom.qbankSearchError.classList.remove('hidden');
     } else {
-        // Calculate counts per source
         const sourceCounts = results.reduce((acc, q) => {
             const source = q.source || 'Uncategorized';
             acc[source] = (acc[source] || 0) + 1;
             return acc;
         }, {});
 
-        // Build the results string
-        let resultsHtml = `<p class="font-bold text-lg mb-2">Found ${results.length} questions, distributed as follows:</p>`;
+        let resultsHtml = `<p class="font-bold text-lg mb-2">Found ${results.length} questions for "${dom.qbankSearchInput.value}", distributed as follows:</p>`;
         resultsHtml += '<ul class="list-disc list-inside text-left">';
         for (const source in sourceCounts) {
             resultsHtml += `<li><strong>${source}:</strong> ${sourceCounts[source]} Questions</li>`;
         }
         resultsHtml += '</ul>';
 
-        // Display the detailed results
-        dom.qbankSearchResultsInfo.innerHTML = resultsHtml; // Use innerHTML to render the list
+        dom.qbankSearchResultsInfo.innerHTML = resultsHtml;
         dom.qbankSearchResultsContainer.classList.remove('hidden');
     }
 }
@@ -469,11 +555,13 @@ export function startSearchedQuiz() {
 }
 
 export function updateChapterFilter() {
+    const questionPool = getQuestionPool();
+
     const selectedSources = [...dom.sourceSelectMock.querySelectorAll('input:checked')].map(el => el.value);
     
     let relevantQuestions = selectedSources.length === 0 
-        ? appState.allQuestions
-        : appState.allQuestions.filter(q => selectedSources.includes(q.source || 'Uncategorized'));
+        ? questionPool
+        : questionPool.filter(q => selectedSources.includes(q.source || 'Uncategorized'));
 
     const chapterCounts = {};
     relevantQuestions.forEach(q => {
@@ -531,12 +619,13 @@ export function startFreeTest() {
     launchQuiz(sampleQuestions, "Free Sample Test");
 }
 
-// --- NEW --- Function for QBank Browse by Chapter/Source
 export function startQuizBrowse(browseBy) {
     const isChapter = browseBy === 'chapter';
     const title = isChapter ? 'Browse by Chapter' : 'Browse by Source';
     
-    const itemCounts = appState.allQuestions.reduce((acc, q) => {
+    const questionPool = getQuestionPool();
+
+    const itemCounts = questionPool.reduce((acc, q) => {
         const item = isChapter ? (q.chapter || 'Uncategorized') : (q.source || 'Uncategorized');
         acc[item] = (acc[item] || 0) + 1;
         return acc;
@@ -548,7 +637,7 @@ export function startQuizBrowse(browseBy) {
     dom.listItems.innerHTML = ''; 
 
     if (items.length === 0) {
-        dom.listItems.innerHTML = `<p class="text-slate-500 col-span-full text-center">No ${browseBy}s found.</p>`;
+        dom.listItems.innerHTML = `<p class="text-slate-500 col-span-full text-center">No ${browseBy}s found for the selected scope.</p>`;
     } else {
         items.forEach(item => {
             const button = document.createElement('button');
@@ -558,11 +647,13 @@ export function startQuizBrowse(browseBy) {
                 <p class="text-sm text-slate-500">${itemCounts[item]} Questions</p>
             `;
             button.addEventListener('click', () => {
-                const questions = appState.allQuestions.filter(q => {
-                    const qItem = isChapter ? (q.chapter || 'Uncategorized') : (q.source || 'Uncategorized');
-                    return qItem === item;
-                });
-                launchQuiz(questions, item); // Launch quiz with all questions for that item
+                if (isChapter) {
+                    const questions = questionPool.filter(q => (q.chapter || 'Uncategorized') === item);
+                    launchQuiz(questions, item);
+                } else {
+                    // This is the new logic for sources: go to the next level down
+                    showChaptersForSource(item);
+                }
             });
             dom.listItems.appendChild(button);
         });
