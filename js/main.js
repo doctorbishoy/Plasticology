@@ -1,4 +1,4 @@
-// js/main.js (FINAL VERSION - With New Q-Bank UI Logic)
+// js/main.js (FINAL VERSION - With Simulation Review Logic)
 
 import { appState } from './state.js';
 import * as dom from './dom.js';
@@ -8,12 +8,12 @@ import { fetchContentData, fetchUserData } from './api.js';
 import { handleLogin, handleLogout, showUserCardModal, handleSaveProfile, showMessengerModal, handleSendMessageBtn, checkPermission, loadUserProgress, updateUserProfileHeader, toggleProfileEditMode } from './features/userProfile.js';
 import {
     launchQuiz, handleMockExamStart, handleStartSimulation, triggerEndQuiz, handleNextQuestion, handlePreviousQuestion, startChapterQuiz, startSearchedQuiz, handleQBankSearch, updateChapterFilter, startFreeTest, startIncorrectQuestionsQuiz, startBookmarkedQuestionsQuiz,
-    toggleBookmark, toggleFlag, showHint, showQuestionNavigator, startQuizBrowse
+    toggleBookmark, toggleFlag, showHint, showQuestionNavigator, startQuizBrowse, restartCurrentQuiz, reviewIncorrectAnswers, startSimulationReview
 } from './features/quiz.js';
 import { renderLectures, saveUserProgress, fetchAndShowLastActivity } from './features/lectures.js';
 import { startOsceSlayer, startCustomOsce, endOsceQuiz, handleOsceNext, handleOscePrevious, showOsceNavigator } from './features/osce.js';
 import { showStudyPlannerScreen, handleCreatePlan } from './features/planner.js';
-import { showLearningModeBrowseScreen, handleLearningSearch, handleLearningNext, handleLearningPrevious, startLearningBrowse } from './features/learningMode.js';
+import { showLearningModeBrowseScreen, handleLearningSearch, handleLearningNext, handleLearningPrevious, startLearningBrowse, startLearningMistakes, startLearningBookmarked } from './features/learningMode.js';
 import { showActivityLog, renderFilteredLog } from './features/activityLog.js';
 import { showNotesScreen, renderNotes, handleSaveNote } from './features/notes.js';
 import { showLeaderboardScreen } from './features/leaderboard.js';
@@ -205,12 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.noteSaveBtn.addEventListener('click', handleSaveNote);
     dom.noteCancelBtn.addEventListener('click', () => { dom.noteModal.classList.add('hidden'); dom.modalBackdrop.classList.add('hidden'); });
     
-    // --- UPDATED QBank Listeners ---
+    // QBank Listeners
     dom.startMockBtn.addEventListener('click', handleMockExamStart);
     dom.startSimulationBtn.addEventListener('click', handleStartSimulation);
     dom.qbankSearchBtn.addEventListener('click', handleQBankSearch);
     dom.qbankStartSearchQuizBtn.addEventListener('click', startSearchedQuiz);
-    dom.qbankClearSearchBtn.addEventListener('click', () => { // Logic for the new Clear Search button
+    dom.qbankClearSearchBtn.addEventListener('click', () => {
         dom.qbankSearchResultsContainer.classList.add('hidden');
         dom.qbankMainContent.classList.remove('hidden');
         dom.qbankSearchInput.value = '';
@@ -229,29 +229,26 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.browseByChapterBtn.addEventListener('click', () => startQuizBrowse('chapter'));
     dom.browseBySourceBtn.addEventListener('click', () => startQuizBrowse('source'));
 
-    // --- NEW: QBank Tab Logic ---
+    // QBank Tab Logic
     const qbankTabs = [dom.qbankTabCreate, dom.qbankTabPractice, dom.qbankTabBrowse];
     const qbankPanels = [dom.qbankPanelCreate, dom.qbankPanelPractice, dom.qbankPanelBrowse];
 
     function switchQBankTab(activeIndex) {
         qbankTabs.forEach((tab, index) => {
-            tab.classList.toggle('active', index === activeIndex);
+            if(tab) tab.classList.toggle('active', index === activeIndex);
         });
         qbankPanels.forEach((panel, index) => {
-            panel.classList.toggle('hidden', index !== activeIndex);
+            if(panel) panel.classList.toggle('hidden', index !== activeIndex);
         });
-        // Always show the main tab content area and hide search results when switching tabs
         dom.qbankMainContent.classList.remove('hidden');
         dom.qbankSearchResultsContainer.classList.add('hidden');
     }
 
     qbankTabs.forEach((tab, index) => {
-        tab.addEventListener('click', () => switchQBankTab(index));
+        if(tab) tab.addEventListener('click', () => switchQBankTab(index));
     });
+    if(qbankTabs[0]) switchQBankTab(0);
 
-    // Set default tab on initial load
-    switchQBankTab(0);
-    // --- END: QBank Tab Logic ---
 
     // In-Quiz Listeners
     dom.endQuizBtn.addEventListener('click', triggerEndQuiz);
@@ -268,10 +265,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Result Screen Button Listeners
+    dom.resultsHomeBtn.addEventListener('click', showMainMenuScreen);
+    dom.restartBtn.addEventListener('click', () => restartCurrentQuiz());
+    dom.reviewIncorrectBtn.addEventListener('click', () => reviewIncorrectAnswers());
+    // NEW: Connect the new simulation review button
+    const reviewSimulationBtn = document.getElementById('review-simulation-btn');
+    if(reviewSimulationBtn) reviewSimulationBtn.addEventListener('click', () => startSimulationReview());
+
+
     // OSCE Listeners
     dom.startOsceSlayerBtn.addEventListener('click', startOsceSlayer);
     dom.startCustomOsceBtn.addEventListener('click', startCustomOsce);
-    dom.toggleOsceOptionsBtn.addEventListener('click', () => dom.customOsceOptions.classList.toggle('visible')); 
+    dom.toggleOsceOptionsBtn.addEventListener('click', () => dom.customOsceOptions.classList.toggle('visible'));
     dom.endOsceQuizBtn.addEventListener('click', () => endOsceQuiz(false));
     dom.osceNextBtn.addEventListener('click', handleOsceNext);
     dom.oscePreviousBtn.addEventListener('click', handleOscePrevious);
@@ -290,6 +296,13 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.learningSearchBtn.addEventListener('click', handleLearningSearch);
     dom.learningBrowseByChapterBtn.addEventListener('click', () => startLearningBrowse('chapter'));
     dom.learningBrowseBySourceBtn.addEventListener('click', () => startLearningBrowse('source'));
+    
+    const learningMistakesBtn = document.getElementById('learning-mistakes-btn');
+    if(learningMistakesBtn) learningMistakesBtn.addEventListener('click', startLearningMistakes);
+
+    const learningBookmarkedBtn = document.getElementById('learning-bookmarked-btn');
+    if(learningBookmarkedBtn) learningBookmarkedBtn.addEventListener('click', startLearningBookmarked);
+
 
     // Study Planner Event Listeners
     dom.showCreatePlanModalBtn.addEventListener('click', () => {

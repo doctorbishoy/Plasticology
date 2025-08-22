@@ -105,10 +105,10 @@ function doPost(e) {
         return handleDeleteStudyPlan(ss, data);
     }
     else if (eventType === 'FinishQuiz') {
-      // Add "AttemptedQuestions" to the headers to store the new data point
-      var quizLogSheet = getOrCreateSheet(ss, QUIZ_LOG_SHEET_NAME, ["Timestamp", "UserID", "UserName", "EventType", "QuizTitle", "Score", "TotalQuestions", "AttemptedQuestions", "Details"]);
-      // Add data.attemptedQuestions to the new row
-      quizLogSheet.appendRow([ new Date(), data.userId, data.userName, eventType, data.quizTitle, data.score, data.totalQuestions, data.attemptedQuestions, data.details ]);
+      // MODIFIED: Swapped "Details" and "AttemptedQuestions" to match the sheet
+      var quizLogSheet = getOrCreateSheet(ss, QUIZ_LOG_SHEET_NAME, ["Timestamp", "UserID", "UserName", "EventType", "QuizTitle", "Score", "TotalQuestions", "Details", "AttemptedQuestions"]);
+      // MODIFIED: Swapped data.details and data.attemptedQuestions to match the sheet
+      quizLogSheet.appendRow([ new Date(), data.userId, data.userName, eventType, data.quizTitle, data.score, data.totalQuestions, data.details, data.attemptedQuestions ]);
       
       var answeredSheet = getOrCreateSheet(ss, ANSWERED_QUESTIONS_LOG_SHEET_NAME, ["UserID", "QuestionID"]);
       var answeredData = sheetToJSON(answeredSheet);
@@ -178,7 +178,6 @@ function doPost(e) {
     return createErrorResponse("An unexpected error occurred in doPost: " + error.toString());
   }
 }
-
 
 // ===============================================================
 // ================ HANDLER FUNCTIONS (وظائف المعالجة) ===========
