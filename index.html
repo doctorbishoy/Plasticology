@@ -102,6 +102,9 @@
                             Log In
                         </button>
                     </form>
+                    <p class="text-center mt-4">
+                        <a href="#" id="show-register-link" class="text-sm text-blue-600 hover:underline">Don't have an account? Create one now!</a>
+                    </p>
                     <div class="relative flex py-5 items-center">
                         <div class="flex-grow border-t border-gray-300"></div>
                         <span class="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
@@ -157,6 +160,11 @@
                             <span class="text-2xl font-bold">Learning Mode</span>
                             <span class="font-light">Study Questions</span>
                         </button>
+                        <button id="theory-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-yellow-500 to-orange-600">
+                            <i class="fas fa-book-medical text-5xl mb-4"></i>
+                            <span class="text-2xl font-bold">Theory Bank</span>
+                            <span class="font-light">Study Essays</span>
+                        </button>
                         <button id="osce-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-sky-500 to-blue-600">
                             <i class="fas fa-user-md text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">OSCE Bank</span>
@@ -172,11 +180,12 @@
                             <span class="text-2xl font-bold">Leaderboard</span>
                             <span class="font-light">Top 10 Users</span>
                         </button>
-                         <button id="study-planner-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-purple-500 to-indigo-600 col-span-2 md:col-span-1">
+                         <button id="study-planner-btn" class="main-menu-btn flex flex-col items-center justify-center p-8 rounded-xl text-white bg-gradient-to-r from-purple-500 to-indigo-600">
                             <i class="fas fa-calendar-alt text-5xl mb-4"></i>
                             <span class="text-2xl font-bold">Study Planner</span>
                             <span class="font-light">Organize Your Study</span>
                         </button>
+                        <div class="col-span-2 md:col-span-1"></div>
                     </div>
                 </div>
             </div>
@@ -482,6 +491,7 @@
                     <div class="mb-4 p-1 bg-slate-200 rounded-lg flex justify-center gap-1">
                         <button id="notes-filter-quizzes" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Quiz Notes</button>
                         <button id="notes-filter-lectures" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Lecture Notes</button>
+                        <button id="notes-filter-theory" class="filter-btn flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors">Theory Notes</button>
                     </div>
                     <div id="notes-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
                     </div>
@@ -650,6 +660,66 @@
                 </div>
             </div>
 
+            <div id="theory-container" class="w-full hidden">
+                <div id="theory-controls" class="">
+                    <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
+                        <button id="theory-back-btn" class="text-slate-700 hover:text-blue-600 transition-colors" title="Back"><i class="fas fa-arrow-left"></i> Back</button>
+                        <h2 class="text-xl md:text-2xl font-bold text-slate-800">Theory & Essay Bank</h2>
+                        <div class="w-16"></div> 
+                    </div>
+                    <div class="p-6 md:p-8">
+                        <div class="relative flex items-center mb-6">
+                            <input type="text" id="theory-search-input" placeholder="Search by keyword..." class="w-full p-3 pl-10 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition">
+                            <button id="theory-search-btn" class="absolute right-2 bg-yellow-600 text-white rounded-lg px-4 py-1.5 hover:bg-yellow-700">Search</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button id="theory-flashcard-mode-btn" class="action-btn w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg">Flashcard Mode</button>
+                            <button id="theory-exam-mode-btn" class="action-btn w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg">Thinking Exam Mode</button>
+                        </div>
+                         <div class="relative flex py-5 items-center">
+                            <div class="flex-grow border-t border-gray-300"></div>
+                            <span class="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+                            <div class="flex-grow border-t border-gray-300"></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button id="theory-browse-by-chapter-btn" class="action-btn w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg">Browse by Chapter</button>
+                            <button id="theory-browse-by-source-btn" class="action-btn w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg">Browse by Source</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="theory-viewer" class="hidden">
+                     <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
+                        <button id="theory-end-btn" class="text-slate-600 hover:text-red-600 transition-colors" title="End Session"><i class="fas fa-stop-circle text-2xl"></i></button>
+                        <h2 id="theory-title" class="text-lg md:text-2xl font-bold text-slate-800 text-center mx-2 truncate"></h2>
+                        <div id="theory-timer" class="text-lg font-mono bg-slate-200 text-slate-800 px-3 py-1 rounded-md"></div>
+                    </div>
+                    <div class="p-6 md:p-8">
+                        <p id="theory-progress-text" class="font-semibold text-slate-600 text-center mb-2"></p>
+                        <div id="theory-card" class="bg-white p-6 rounded-lg shadow-md min-h-[50vh] flex flex-col">
+                            <p id="theory-source-text" class="text-sm text-slate-400 mb-2"></p>
+                            <div id="theory-img-container" class="mb-4 text-center"></div>
+                            <h3 id="theory-question-text" class="text-xl font-bold text-slate-800 mb-4 flex-grow"></h3>
+                            <div id="theory-answer-container" class="mt-4 p-4 bg-green-50 border-l-4 border-green-400 hidden">
+                                <h4 class="font-bold text-green-800 mb-2">Model Answer</h4>
+                                <p id="theory-answer-text" class="text-green-900"></p>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <button id="theory-show-answer-btn" class="action-btn bg-blue-600 text-white py-2 px-6 rounded-lg">Show Answer</button>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-between items-center">
+                            <button id="theory-prev-btn" class="action-btn bg-slate-300 text-slate-800 font-bold py-3 px-6 rounded-lg hover:bg-slate-400">Previous</button>
+                             <div class="flex items-center gap-4">
+                                <button id="theory-note-btn" class="text-2xl text-slate-500 hover:text-amber-500 transition-colors note-icon" title="My Note"><i class="fas fa-sticky-note"></i></button>
+                                <button id="theory-status-btn" class="text-2xl text-slate-500 hover:text-green-500 transition-colors" title="Mark as Completed"><i class="far fa-check-circle"></i></button>
+                            </div>
+                            <button id="theory-next-btn" class="action-btn bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <div id="study-planner-container" class="w-full hidden">
                 <div class="p-4 md:p-6 bg-slate-100 border-b flex justify-between items-center">
                     <button id="study-planner-back-btn" class="text-slate-700 hover:text-blue-600 transition-colors" title="Back"><i class="fas fa-arrow-left"></i> Back</button>
@@ -726,6 +796,38 @@
     </div>
     
     <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        
+        <div id="registration-modal" class="bg-white rounded-lg p-8 shadow-xl max-w-lg w-full hidden">
+            <h3 class="text-xl font-bold mb-4 text-center">Create a New Account</h3>
+            <p class="text-center text-slate-500 mb-6">Register for a 24-hour free trial.</p>
+            <form id="registration-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="register-name" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Full Name (Required)" required>
+                    <input type="text" id="register-username" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Username (Required)" required>
+                    <input type="email" id="register-email" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Email (Required)" required>
+                    <input type="text" id="register-mobile" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Mobile Number (Required)" required>
+                    <input type="password" id="register-password" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Password (Required)" required>
+                    <input type="password" id="register-confirm-password" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Confirm Password (Required)" required>
+                    <input type="text" id="register-country" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Country (Required)" required>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                     <input type="text" id="register-study-type" class="shadow-sm border rounded-lg w-full py-2 px-3" placeholder="Study Type (Optional)">
+                    <div>
+                        <label for="register-exam-date" class="block text-sm font-medium text-slate-500 mb-1">Closest Exam Date (Optional)</label>
+                        <input type="date" id="register-exam-date" class="shadow-sm border rounded-lg w-full py-2 px-3 text-slate-500">
+                    </div>
+                </div>
+                
+                <p id="registration-error" class="text-red-500 text-xs italic hidden"></p>
+                <p id="registration-success" class="text-green-600 hidden"></p>
+
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" id="register-cancel-btn" class="action-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Cancel</button>
+                    <button type="submit" id="register-submit-btn" class="action-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Register</button>
+                </div>
+            </form>
+        </div>
+
         <div id="confirmation-modal" class="bg-white rounded-lg p-8 shadow-xl max-w-sm w-full hidden">
             <h3 id="modal-title" class="text-xl font-bold mb-4">Are you sure?</h3>
             <p id="modal-text" class="text-slate-600 mb-6"></p>
@@ -789,17 +891,29 @@
                 <button id="edit-profile-btn" class="mt-2 text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-edit mr-1"></i> Edit Profile</button>
             </div>
             <div id="profile-details-view">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-semibold text-slate-700">Total Score:</span>
-                    <span id="card-quiz-score" class="text-blue-600 font-bold text-xl">0</span>
+                <div class="border-t pt-4 mt-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold text-slate-700">Subscription:</span>
+                        <span id="card-subscription-status" class="text-slate-600 font-bold">--</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold text-slate-700">Expires On:</span>
+                        <span id="card-subscription-expiry" class="text-slate-600">--</span>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-semibold text-slate-700">Exam Date:</span>
-                    <span id="card-exam-date" class="text-slate-600">Not Set</span>
-                </div>
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-semibold text-slate-700">Days Left:</span>
-                    <span id="card-days-left" class="text-red-600 font-bold">N/A</span>
+                 <div class="border-t pt-4 mt-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold text-slate-700">Total Score:</span>
+                        <span id="card-quiz-score" class="text-blue-600 font-bold text-xl">0</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold text-slate-700">Exam Date:</span>
+                        <span id="card-exam-date" class="text-slate-600">Not Set</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold text-slate-700">Days Left:</span>
+                        <span id="card-days-left" class="text-red-600 font-bold">N/A</span>
+                    </div>
                 </div>
             </div>
             <div id="profile-edit-view" class="hidden">
